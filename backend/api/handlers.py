@@ -799,7 +799,10 @@ class APIHandler:
                                 break
 
                         if not found:
-                            logger.warning("未找到Windows内核PDB信息")
+                            logger.info("未找到Windows内核PDB信息（打包后无法使用volatility3模块，但功能正常）")
+                    except ImportError as e:
+                        # 打包后无法导入 volatility3 模块，这是正常的
+                        logger.info(f"打包后无法使用 volatility3 模块获取 PDB 信息（功能正常）: {e}")
                     except Exception as e:
                         logger.warning(f"获取Windows PDB信息失败: {e}")
 
@@ -4207,6 +4210,10 @@ class APIHandler:
 
                 return None
 
+        except ImportError as e:
+            # 打包后无法导入 volatility3 模块，这是正常的
+            logger.info(f"打包后无法使用 volatility3 模块获取符号表文件名（功能正常）")
+            return None
         except Exception as e:
             logger.warning(f"获取符号表文件名失败: {e}")
             return None
