@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend\plugins=backend/plugins --include-module=webview --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console main.py
+          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend\plugins=backend/plugins --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --nofollow-import-to=webview.platforms.android --nofollow-import-to=webview.platforms.cocoa --nofollow-import-to=webview.platforms.cef --nofollow-import-to=webview.platforms.gtk --nofollow-import-to=webview.platforms.mshtml --nofollow-import-to=webview.platforms.qt --windows-disable-console main.py
 
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
           pip install pywebview python-docx pefile pyyaml rich
 
       - name: Build with Nuitka
-        # 关键：不排除 webview.platforms.*，让插件自动处理
+        # 关键：排除不需要的 pywebview 平台后端
         run: |
           python -m nuitka --standalone --assume-yes-for-downloads \
             --output-dir=dist \
@@ -61,12 +61,19 @@ jobs:
             --include-data-dir=frontend=frontend \
             --include-data-dir=backend/plugins=backend/plugins \
             --include-module=webview \
+            --include-module=webview.platforms.cocoa \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
             --nofollow-import-to=pandas \
             --nofollow-import-to=scipy \
             --nofollow-import-to=tkinter \
+            --nofollow-import-to=webview.platforms.android \
+            --nofollow-import-to=webview.platforms.edgechromium \
+            --nofollow-import-to=webview.platforms.cef \
+            --nofollow-import-to=webview.platforms.gtk \
+            --nofollow-import-to=webview.platforms.mshtml \
+            --nofollow-import-to=webview.platforms.qt \
             --macos-create-app-bundle \
             --macos-app-icon=frontend/assets/LensAnalysis-icon.icns \
             --macos-app-name=LensAnalysis \
@@ -107,12 +114,19 @@ jobs:
             --include-data-dir=frontend=frontend \
             --include-data-dir=backend/plugins=backend/plugins \
             --include-module=webview \
+            --include-module=webview.platforms.gtk \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
             --nofollow-import-to=pandas \
             --nofollow-import-to=scipy \
             --nofollow-import-to=tkinter \
+            --nofollow-import-to=webview.platforms.android \
+            --nofollow-import-to=webview.platforms.cocoa \
+            --nofollow-import-to=webview.platforms.cef \
+            --nofollow-import-to=webview.platforms.edgechromium \
+            --nofollow-import-to=webview.platforms.mshtml \
+            --nofollow-import-to=webview.platforms.qt \
             main.py
 
       - name: Upload Linux app
