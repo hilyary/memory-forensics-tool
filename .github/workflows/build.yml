@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=volatility3 --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=volatility3 --include-package=volatility3.plugins --include-package=volatility3.framework --include-package=volatility3.cli --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
 
       - name: List build output
         run: |
@@ -64,6 +64,9 @@ jobs:
             --jobs=4 \
             --include-data-dir=frontend=frontend \
             --include-package=volatility3 \
+            --include-package=volatility3.plugins \
+            --include-package=volatility3.framework \
+            --include-package=volatility3.cli \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.cocoa \
@@ -90,55 +93,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-macOS
-          path: dist/LensAnalysis*
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: Install Nuitka
-        run: pip install nuitka
-
-      - name: Install dependencies
-        run: |
-          pip install pywebview python-docx pefile pyyaml rich volatility3
-          sudo apt-get update
-          sudo apt-get install -y libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0
-
-      - name: Build with Nuitka
-        run: |
-          python -m nuitka --standalone --assume-yes-for-downloads \
-            --output-dir=dist \
-            --output-filename=LensAnalysis \
-            --jobs=4 \
-            --include-data-dir=frontend=frontend \
-            --include-package=volatility3 \
-            --plugin-disable=pywebview \
-            --include-module=webview \
-            --include-module=webview.platforms.gtk \
-            --nofollow-import-to=matplotlib \
-            --nofollow-import-to=numpy \
-            --nofollow-import-to=pandas \
-            --nofollow-import-to=scipy \
-            --nofollow-import-to=tkinter \
-            LensAnalysis.py
-
-      - name: List build output
-        run: |
-          echo "=== dist directory ==="
-          ls -la dist/ || echo "dist directory not found"
-          echo ""
-          echo "=== Looking for LensAnalysis ==="
-          find dist -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
-
-      - name: Upload Linux app
-        uses: actions/upload-artifact@v4
-        with:
-          name: LensAnalysis-Linux
           path: dist/LensAnalysis*
