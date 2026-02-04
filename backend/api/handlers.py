@@ -4670,6 +4670,7 @@ class APIHandler:
                 from volatility3.framework.symbols.windows import pdbutil, pdbutil
                 from volatility3.framework import contexts
             except ImportError as e:
+                self._hide_loading()
                 logger.error(f"导入Volatility3 PDB工具失败: {e}")
                 return {
                     'status': 'error',
