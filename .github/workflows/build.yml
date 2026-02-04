@@ -22,11 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich
+          pip install pywebview python-docx pefile pyyaml rich volatility3
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=volatility3 --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
 
       - name: List build output
         run: |
@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich
+          pip install pywebview python-docx pefile pyyaml rich volatility3
 
       - name: Build with Nuitka
         run: |
@@ -63,10 +63,10 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
+            --include-package=volatility3 \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.cocoa \
-            --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
             --nofollow-import-to=pandas \
@@ -107,7 +107,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich
+          pip install pywebview python-docx pefile pyyaml rich volatility3
           sudo apt-get update
           sudo apt-get install -y libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0
 
@@ -118,10 +118,10 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
+            --include-package=volatility3 \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.gtk \
-            --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
             --nofollow-import-to=pandas \
