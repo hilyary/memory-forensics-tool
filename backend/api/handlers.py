@@ -464,17 +464,34 @@ class APIHandler:
     def get_system_info(self) -> Dict[str, Any]:
         """获取系统信息"""
         import platform
-        import volatility3
-        from volatility3.framework import constants
+        import subprocess
 
+        # 尝试获取 Volatility 3 版本
+        vol_version = 'unknown'
+
+        # 方法1: 尝试导入模块（开发模式）
         try:
-            vol_version = volatility3.__version__
-        except AttributeError:
-            import pkg_resources
+            import volatility3
             try:
-                vol_version = pkg_resources.get_distribution('volatility3').version
+                vol_version = volatility3.__version__
+            except AttributeError:
+                vol_version = 'installed (version unknown)'
+        except ImportError:
+            # 方法2: 使用 vol 命令（打包后）
+            try:
+                result = subprocess.run(
+                    ['vol', '--version'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if result.returncode == 0:
+                    # 输出格式通常是 "Volatility 3 Framework 2.7.0"
+                    output = result.stdout.strip() or result.stderr.strip()
+                    if 'Volatility 3' in output or 'volatility' in output.lower():
+                        vol_version = output.split()[-1] if output.split() else 'installed'
             except:
-                vol_version = 'unknown'
+                pass
 
         return {
             'status': 'success',
@@ -743,45 +760,44 @@ class APIHandler:
                     os_type = 'mac'
 
                 if os_type == 'windows':
-                    # 获取Windows镜像的PDB信息 - 直接使用Volatility3框架
+                    # 获取Windows镜像的PDB信息 - 使用vol命令（兼容打包后）
                     try:
-                        from volatility3.framework.symbols.windows import pdbutil
-                        from volatility3.framework import contexts
-                        from volatility3.framework.layers import physical
+                        import subprocess
+                        import json
+                        import re
 
-                        # 构建context并加载镜像
-                        context = contexts.Context()
                         file_path = self.current_image['path']
 
-                        # FileLayer需要URL格式的路径
-                        import urllib.request
-                        import urllib.parse
-                        file_url = 'file://' + urllib.request.pathname2url(file_path)
+                        # 构建vol命令
+                        cmd = [
+                            'vol',
+                            '-f', file_path,
+                            'windows.pdbscan.PdbScan'
+                        ]
 
-                        # 设置配置
-                        context.config['FileLayer.location'] = file_url
+                        # 执行命令
+                        result = subprocess.run(
+                            cmd,
+                            capture_output=True,
+                            text=True,
+                            timeout=60
+                        )
 
-                        # 加载物理层
-                        layer = physical.FileLayer(context, 'FileLayer', name="FileLayer")
-                        context.add_layer(layer)
+                        if result.returncode == 0:
+                            # 解析输出获取PDB信息
+                            output = result.stderr or result.stdout
 
-                        # 获取层名称
-                        layer_name = layer.name
-                        page_size = 0x1000  # 默认页面大小
+                            # 查找GUID和age信息
+                            # 输出格式类似: ntoskrnl.exe ... GUID: {guid} Age: {age}
+                            guid_match = re.search(r'GUID:\s*([0-9a-fA-F-]+)', output)
+                            age_match = re.search(r'Age:\s*(\d+)', output)
+                            pdb_match = re.search(r'(ntkrnlmp\.pdb|ntoskrnl\.pdb|krnl\.pdb|ntkrpamp\.pdb)', output)
 
-                        # 扫描常见的Windows内核PDB名称
-                        pdb_names = [b'ntkrnlmp.pdb', b'ntoskrnl.pdb', b'krnl.pdb', b'ntkrpamp.pdb']
+                            if guid_match and pdb_match:
+                                guid = guid_match.group(1)
+                                age = int(age_match.group(1)) if age_match else 0
+                                pdb_name = pdb_match.group(1)
 
-                        # 使用pdbname_scan扫描PDB签名
-                        found = False
-                        for result in pdbutil.PDBUtility.pdbname_scan(
-                            context, layer_name, page_size, pdb_names
-                        ):
-                            guid = result.get('GUID', '')
-                            age = result.get('age', 0)
-                            pdb_name = result.get('pdb_name', '')
-
-                            if guid and pdb_name:
                                 # 检查符号表文件是否存在
                                 symbol_path = self._symbols_dir / 'windows' / pdb_name / f"{guid}-{age}.json.xz"
                                 is_match = symbol_path.exists()
@@ -795,11 +811,10 @@ class APIHandler:
                                 }
 
                                 logger.info(f"Windows镜像PDB信息: {pdb_name} - {guid}-{age}, 符号表匹配: {is_match}")
-                                found = True
-                                break
-
-                        if not found:
-                            logger.warning("未找到Windows内核PDB信息")
+                            else:
+                                logger.warning("无法从vol输出解析PDB信息")
+                        else:
+                            logger.warning(f"vol pdbscan 命令失败: {result.stderr}")
                     except Exception as e:
                         logger.warning(f"获取Windows PDB信息失败: {e}")
 
@@ -4137,41 +4152,46 @@ class APIHandler:
 
         try:
             if os_type == 'windows':
-                # Windows: 获取PDB符号表文件名
-                from volatility3.framework.symbols.windows import pdbutil
-                from volatility3.framework import contexts
-                from volatility3.framework.layers import physical
+                # Windows: 使用vol命令获取PDB符号表文件名
+                import subprocess
+                import re
 
-                context = contexts.Context()
                 file_path = self.current_image['path']
 
-                import urllib.request
-                file_url = 'file://' + urllib.request.pathname2url(file_path)
-                context.config['FileLayer.location'] = file_url
+                # 构建vol命令
+                cmd = [
+                    'vol',
+                    '-f', file_path,
+                    'windows.pdbscan.PdbScan'
+                ]
 
-                layer = physical.FileLayer(context, 'FileLayer', name="FileLayer")
-                context.add_layer(layer)
+                # 执行命令
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
 
-                layer_name = layer.name
-                page_size = 0x1000
+                if result.returncode == 0:
+                    # 解析输出获取PDB信息
+                    output = result.stderr or result.stdout
 
-                pdb_names = [b'ntkrnlmp.pdb', b'ntoskrnl.pdb', b'krnl.pdb', b'ntkrpamp.pdb']
+                    # 查找GUID和age信息
+                    guid_match = re.search(r'GUID:\s*([0-9a-fA-F-]+)', output)
+                    age_match = re.search(r'Age:\s*(\d+)', output)
+                    pdb_match = re.search(r'(ntkrnlmp\.pdb|ntoskrnl\.pdb|krnl\.pdb|ntkrpamp\.pdb)', output)
 
-                for result in pdbutil.PDBUtility.pdbname_scan(
-                    context, layer_name, page_size, pdb_names
-                ):
-                    guid = result.get('GUID', '')
-                    age = result.get('age', 0)
-                    pdb_name = result.get('pdb_name', '')
+                    if guid_match and pdb_match:
+                        guid = guid_match.group(1)
+                        age = int(age_match.group(1)) if age_match else 0
+                        pdb_name = pdb_match.group(1)
 
-                    if guid and pdb_name:
                         # 检查符号表文件是否存在
                         symbol_path = self._symbols_dir / 'windows' / pdb_name / f"{guid}-{age}.json.xz"
                         if symbol_path.exists():
                             # 返回格式: ntkrnlmp.pdb (GUID-age)
                             return f"{pdb_name} ({guid}-{age})"
-                        else:
-                            return None
 
                 return None
 
@@ -4634,11 +4654,11 @@ class APIHandler:
     def download_windows_symbols(self) -> Dict[str, Any]:
         """从微软官方符号服务器自动下载Windows符号表
 
-        优先策略：
-        1. 首先尝试运行 Volatility 不带 -s 参数，让官方自动下载符号表
-        2. 如果失败，再使用自定义 PDB 扫描和下载逻辑作为备用
+        注意：打包后此功能需要 Volatility 3 已安装
         """
         import os
+        import subprocess
+        import re
         try:
             if not self.current_image:
                 return {
@@ -4655,261 +4675,82 @@ class APIHandler:
                 }
 
             logger.info("开始下载Windows符号表...")
-            logger.info("使用自定义 PDB 扫描和下载方案（支持代理）...")
-            self._show_loading('正在下载Windows符号表...', '正在从微软官方符号服务器下载...\n\n支持代理，可能需要几分钟，请耐心等待。')
+            self._show_loading('正在扫描PDB信息...', '正在从内存镜像获取PDB GUID...\n\n请稍候...')
 
-            # 导入Volatility3的PDB工具
-            try:
-                from volatility3.framework.symbols.windows import pdbutil, pdbutil
-                from volatility3.framework import contexts
-            except ImportError as e:
-                logger.error(f"导入Volatility3 PDB工具失败: {e}")
-                return {
-                    'status': 'error',
-                    'message': f'缺少必要的依赖: {str(e)}'
-                }
+            file_path = self.current_image['path']
 
-            try:
-                # 直接使用Volatility3框架扫描PDB签名
-                from volatility3.framework import contexts
-                from volatility3.framework.layers import physical
-                import urllib.request
+            # 使用 vol 命令扫描 PDB 信息
+            cmd = [
+                'vol',
+                '-f', file_path,
+                'windows.pdbscan.PdbScan'
+            ]
 
-                # 构建context并加载镜像
-                context = contexts.Context()
-                file_path = self.current_image['path']
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
 
-                # FileLayer需要URL格式的路径
-                file_url = 'file://' + urllib.request.pathname2url(file_path)
-
-                # 设置配置
-                context.config['FileLayer.location'] = file_url
-
-                # 加载物理层
-                layer = physical.FileLayer(context, 'FileLayer', name="FileLayer")
-                context.add_layer(layer)
-
-                layer_name = layer.name
-                page_size = 0x1000
-
-                # 扫描常见的Windows内核PDB名称
-                pdb_names = [b'ntkrnlmp.pdb', b'ntoskrnl.pdb', b'krnl.pdb', b'ntkrpamp.pdb']
-
-                logger.info("正在扫描内存镜像获取PDB信息...")
-
-                # 使用pdbname_scan扫描PDB签名
-                pdb_results = list(pdbutil.PDBUtility.pdbname_scan(
-                    context, layer_name, page_size, pdb_names
-                ))
-
-                if not pdb_results:
-                    self._hide_loading()
-                    return {
-                        'status': 'error',
-                        'message': '未在内存镜像中找到PDB信息，可能不是有效的Windows镜像'
-                    }
-
-                # 使用第一个找到的内核PDB
-                result = pdb_results[0]
-                guid = result.get('GUID', '')
-                age = result.get('age', 0)
-                pdb_name = result.get('pdb_name', 'ntkrnlmp.pdb')
-
-                logger.info(f"找到PDB信息: {pdb_name} - {guid}-{age}")
-
-                # 检查符号表是否已存在
-                symbol_path = self._symbols_dir / 'windows' / pdb_name / f"{guid}-{age}.json.xz"
-                if symbol_path.exists():
-                    self._hide_loading()
-                    return {
-                        'status': 'success',
-                        'message': f'符号表已存在\n\nPDB: {pdb_name}\nGUID: {guid}-{age}',
-                        'already_exists': True
-                    }
-
-                # 使用Volatility3的download_pdb_isf方法下载
-                logger.info(f"正在下载 {pdb_name} (GUID: {guid}, Age: {age})...")
-
-                # 创建一个简单的context
-                from volatility3.framework import constants, symbols as vol_symbols
-                import tempfile
-                import shutil
-
-                # 设置符号表路径（包含用户目录和系统目录）
-                cache_dir = Path.home() / '.cache' / 'volatility3'
-                cache_dir.mkdir(parents=True, exist_ok=True)
-
-                constants.PATHS = [str(self._symbols_dir), str(cache_dir)]
-
-                # 关键修复：将用户符号目录添加到Volatility3的符号路径中
-                # 这样download_pdb_isf才能找到并保存到正确的位置
-                user_symbol_path = str(self._symbols_dir)
-                if user_symbol_path not in vol_symbols.__path__:
-                    vol_symbols.__path__.insert(0, user_symbol_path)
-                    logger.info(f"添加符号路径到Volatility3: {user_symbol_path}")
-
-                # 清理可能存在的损坏缓存
-                for f in cache_dir.glob('cache/*.pdb'):
-                    try:
-                        f.unlink()
-                        logger.info(f"清理缓存文件: {f}")
-                    except:
-                        pass
-
-                # 调用Volatility3的下载方法
-                # 注意：Volatility3的download_pdb_isf存在PDB解析bug，使用替代方案
-                import urllib.request as req2
-                import lzma
-                from volatility3.framework.layers import physical
-                from volatility3.framework.symbols.windows import pdbutil
-
-                # 下载PDB文件到临时位置（跨平台兼容）
-                pdb_url = f"https://msdl.microsoft.com/download/symbols/{pdb_name}/{guid}{age:01X}/{pdb_name}"
-                logger.info(f"正在从微软服务器下载PDB: {pdb_url}")
-
-                # 使用跨平台的方式创建临时文件
-                # 避免使用NamedTemporaryFile，因为它在Windows上有权限问题
-                temp_dir = Path(tempfile.gettempdir())
-                temp_pdb_path = temp_dir / f"temp_pdb_{os.getpid()}_{uuid.uuid4().hex[:8]}.pdb"
-
-                try:
-                    # 下载PDB文件（支持代理）
-                    logger.info(f"下载到临时文件: {temp_pdb_path}")
-
-                    # 检查是否配置了代理
-                    proxy_url = self._build_proxy_url()
-                    if proxy_url:
-                        logger.info(f"使用代理下载: {proxy_url.split('@')[0] if '@' in proxy_url else proxy_url}")
-
-                    # 使用代理下载PDB文件
-                    if proxy_url:
-                        if proxy_url.startswith('socks'):
-                            # SOCKS代理需要PySocks库
-                            try:
-                                import socks
-                                import socket as socket_module
-
-                                sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
-                                proxy_host = self._proxy_config.get('host')
-                                proxy_port = self._proxy_config.get('port')
-                                proxy_user = self._proxy_config.get('username')
-                                proxy_pass = self._proxy_config.get('password')
-
-                                socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
-                                socket_module.socket = socks.socksocket
-                                req2.urlretrieve(pdb_url, str(temp_pdb_path))
-                            except ImportError:
-                                logger.warning("未安装PySocks库，SOCKS代理不可用，尝试直接下载")
-                                req2.urlretrieve(pdb_url, str(temp_pdb_path))
-                            finally:
-                                # 恢复原始socket
-                                try:
-                                    socket_module.socket = socket_module._original_socket
-                                except:
-                                    pass
-                        else:
-                            # HTTP/HTTPS代理
-                            proxy_handler = req2.ProxyHandler({'https': proxy_url, 'http': proxy_url})
-                            opener = req2.build_opener(proxy_handler)
-                            # 创建请求并添加User-Agent
-                            req_pdb = req2.Request(pdb_url)
-                            req_pdb.add_header('User-Agent', 'Microsoft-Symbol-Server/10.0.10036.206')
-                            # 使用opener下载文件
-                            response = opener.open(req_pdb, timeout=60)
-                            with open(temp_pdb_path, 'wb') as f:
-                                f.write(response.read())
-                    else:
-                        req2.urlretrieve(pdb_url, str(temp_pdb_path))
-
-                    pdb_size = temp_pdb_path.stat().st_size
-                    logger.info(f"PDB下载完成: {temp_pdb_path} ({pdb_size} bytes)")
-
-                    # 转换PDB为ISF格式
-                    # 使用pathlib生成跨平台的file:// URL
-                    # Path.as_uri()会自动处理Windows和Unix路径的差异
-                    temp_pdb_url = temp_pdb_path.as_uri()
-
-                    # 创建context并加载PDB文件
-                    pdb_context = contexts.Context()
-                    pdb_context.config['pdbreader.FileLayer.location'] = temp_pdb_url
-
-                    pdb_layer = physical.FileLayer(pdb_context, 'pdbreader.FileLayer', 'FileLayer')
-                    pdb_context.add_layer(pdb_layer)
-
-                    logger.info("正在转换PDB为ISF格式...")
-                    # 使用PdbReader转换
-                    msf_layer_name, new_context = pdbutil.pdbconv.PdbReader.load_pdb_layer(pdb_context, temp_pdb_url)
-                    reader = pdbutil.pdbconv.PdbReader(new_context, temp_pdb_url, pdb_name)
-                    json_output = reader.get_json()
-
-                    logger.info(f"符号表转换成功，JSON大小: {len(json_output)} bytes")
-
-                    # 确保目录存在
-                    os.makedirs(os.path.dirname(symbol_path), exist_ok=True)
-
-                    # 保存为JSON.xz文件
-                    with lzma.open(symbol_path, 'w') as f:
-                        f.write(bytes(json.dumps(json_output, indent=2, sort_keys=True), 'utf-8'))
-
-                    logger.info(f"符号表已保存: {symbol_path}")
-
-                finally:
-                    # 清理临时文件（跨平台兼容）
-                    try:
-                        if temp_pdb_path.exists():
-                            temp_pdb_path.unlink()
-                            logger.info(f"已清理临时PDB文件: {temp_pdb_path}")
-                    except Exception as cleanup_error:
-                        logger.warning(f"清理临时文件失败: {cleanup_error}")
-
-                # 检查是否下载成功
-                if symbol_path.exists():
-                    self._hide_loading()
-                    logger.info(f"符号表下载成功: {symbol_path}")
-                    return {
-                        'status': 'success',
-                        'message': f'Windows符号表下载成功！\n\nPDB: {pdb_name}\nGUID: {guid}-{age}\n已安装到: {symbol_path.parent}',
-                        'already_exists': False
-                    }
-                else:
-                    self._hide_loading()
-                    return {
-                        'status': 'error',
-                        'message': f'下载完成但未找到符号表文件\n\n可能需要手动下载。\nPDB: {pdb_name}\nGUID: {guid}-{age}'
-                    }
-
-            except Exception as e:
+            if result.returncode != 0:
                 self._hide_loading()
-                error_type = type(e).__name__
-                error_msg = str(e)
-
-                logger.error(f"下载Windows符号表失败: {error_type}: {error_msg}", exc_info=True)
-
-                # 如果是PDB解析错误，提供手动下载指导
-                if "Offset outside" in error_msg or "buffer boundaries" in error_msg:
-                    manual_download_url = f"https://msdl.microsoft.com/download/symbols/{pdb_name}/{guid}{age:01X}/{pdb_name}"
-                    return {
-                        'status': 'error',
-                        'message': f'PDB文件解析失败，可能是文件损坏或版本不兼容\n\n'
-                                  f'建议手动下载步骤：\n'
-                                  f'1. 访问: {manual_download_url}\n'
-                                  f'2. 下载PDB文件\n'
-                                  f'3. 使用Volatility3命令转换：\n'
-                                  f'   vol -f <镜像文件> windows.pdbscan.PdbScan\n\n'
-                                  f'PDB信息: {pdb_name}\nGUID: {guid}-{age}'
-                    }
-
                 return {
                     'status': 'error',
-                    'message': f'下载Windows符号表失败: {error_type}: {error_msg}'
+                    'message': f'扫描PDB失败，请确保已安装 Volatility 3\n\n错误: {result.stderr}'
                 }
+
+            # 解析输出
+            output = result.stderr or result.stdout
+            guid_match = re.search(r'GUID:\s*([0-9a-fA-F-]+)', output)
+            age_match = re.search(r'Age:\s*(\d+)', output)
+            pdb_match = re.search(r'(ntkrnlmp\.pdb|ntoskrnl\.pdb|krnl\.pdb|ntkrpamp\.pdb)', output)
+
+            if not (guid_match and pdb_match):
+                self._hide_loading()
+                return {
+                    'status': 'error',
+                    'message': '未在内存镜像中找到PDB信息\n\n可能不是有效的Windows镜像'
+                }
+
+            guid = guid_match.group(1)
+            age = int(age_match.group(1)) if age_match else 0
+            pdb_name = pdb_match.group(1)
+
+            logger.info(f"找到PDB信息: {pdb_name} - {guid}-{age}")
+
+            # 检查符号表是否已存在
+            symbol_path = self._symbols_dir / 'windows' / pdb_name / f"{guid}-{age}.json.xz"
+            if symbol_path.exists():
+                self._hide_loading()
+                return {
+                    'status': 'success',
+                    'message': f'符号表已存在\n\nPDB: {pdb_name}\nGUID: {guid}-{age}\n已安装到: {symbol_path.parent}',
+                    'already_exists': True
+                }
+
+            # 打包后无法自动下载（需要 volatility3 模块）
+            # 返回手动下载指引
+            self._hide_loading()
+            manual_download_url = f"https://msdl.microsoft.com/download/symbols/{pdb_name}/{guid}{age:01X}/{pdb_name}"
+
+            return {
+                'status': 'error',
+                'message': f'打包版本无法自动下载符号表，请手动下载\n\n'
+                          f'步骤：\n'
+                          f'1. 访问: {manual_download_url}\n'
+                          f'2. 下载 PDB 文件\n'
+                          f'3. 运行命令转换：\n'
+                          f'   vol -f {file_path} windows.symbolstable.SymbolTable\n\n'
+                          f'或安装 Volatility 3 后使用完整版工具。'
+            }
 
         except Exception as e:
             self._hide_loading()
-            logger.error(f"下载Windows符号表失败: {str(e)}", exc_info=True)
+            logger.error(f"下载Windows符号表失败: {e}", exc_info=True)
             return {
                 'status': 'error',
-                'message': f'下载Windows符号表失败: {str(e)}'
+                'message': f'操作失败: {str(e)}'
             }
 
     # ==================== Volatility 3 检测和安装 ====================
