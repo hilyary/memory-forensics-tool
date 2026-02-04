@@ -5141,23 +5141,6 @@ class APIHandler:
                 'message': f'安装失败: {str(e)}'
             }
 
-    def _show_loading(self, message: str = '处理中...'):
-        """显示加载提示"""
-        if hasattr(self, 'window') and self.window:
-            try:
-                self.window.evaluate_js(
-                    f'if(window.showLoading) window.showLoading("{message}");'
-                )
-            except Exception as e:
-                logger.warning(f"显示加载提示失败: {e}")
-
-    def _hide_loading(self):
-        """隐藏加载提示"""
-        if hasattr(self, 'window') and self.window:
-            try:
-                self.window.evaluate_js('if(window.hideLoading) window.hideLoading();')
-            except Exception as e:
-                logger.warning(f"隐藏加载提示失败: {e}")
 
     def _get_manual_install_message(self, platform: str) -> str:
         """获取手动安装指引"""

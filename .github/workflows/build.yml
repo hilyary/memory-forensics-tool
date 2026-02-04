@@ -49,39 +49,48 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install PyInstaller
-        run: pip install pyinstaller
+      - name: Install Nuitka
+        run: pip install nuitka
 
       - name: Install dependencies
         run: |
           pip install pywebview python-docx pefile pyyaml rich
 
-      - name: Build with PyInstaller
+      - name: Build with Nuitka
         run: |
-          pyinstaller --onefile --windowed \
-            --name=LensAnalysis \
-            --icon=frontend/assets/LensAnalysis-icon.icns \
-            --add-data=frontend:frontend \
-            --hidden-import=webview \
-            --hidden-import=webview.platforms.cocoa \
-            --exclude-module=volatility3 \
-            --exclude-module=matplotlib \
-            --exclude-module=numpy \
-            --exclude-module=pandas \
-            --exclude-module=scipy \
-            --exclude-module=tkinter \
+          python -m nuitka --standalone --assume-yes-for-downloads \
+            --output-dir=dist \
+            --output-filename=LensAnalysis \
+            --jobs=4 \
+            --include-data-dir=frontend=frontend \
+            --plugin-disable=pywebview \
+            --include-module=webview \
+            --include-module=webview.platforms.cocoa \
+            --nofollow-import-to=volatility3 \
+            --nofollow-import-to=matplotlib \
+            --nofollow-import-to=numpy \
+            --nofollow-import-to=pandas \
+            --nofollow-import-to=scipy \
+            --nofollow-import-to=tkinter \
+            --macos-create-app-bundle \
+            --macos-app-icon=frontend/assets/LensAnalysis-icon.icns \
+            --macos-app-name=LensAnalysis \
+            --macos-app-version=1.0.0 \
             LensAnalysis.py
 
       - name: List build output
         run: |
           echo "=== dist directory ==="
           ls -la dist/ || echo "dist directory not found"
+          echo ""
+          echo "=== Looking for LensAnalysis ==="
+          find dist -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
 
       - name: Upload macOS app
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-macOS
-          path: dist/LensAnalysis
+          path: dist/LensAnalysis*
 
   build-linux:
     runs-on: ubuntu-latest
