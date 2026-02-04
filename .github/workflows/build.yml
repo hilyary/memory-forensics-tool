@@ -26,21 +26,7 @@ jobs:
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --assume-yes-for-downloads ^
-            --output-dir=dist ^
-            --output-filename=LensAnalysis.exe ^
-            --jobs=4 ^
-            --include-data-dir=frontend=frontend ^
-            --include-data-dir=backend\plugins=backend/plugins ^
-            --include-module=webview ^
-            --nofollow-import-to=volatility3 ^
-            --nofollow-import-to=matplotlib ^
-            --nofollow-import-to=numpy ^
-            --nofollow-import-to=pandas ^
-            --nofollow-import-to=scipy ^
-            --nofollow-import-to=tkinter ^
-            --windows-disable-console ^
-            main.py
+          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend\plugins=backend/plugins --include-module=webview --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console main.py
 
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
@@ -77,9 +63,9 @@ jobs:
             --include-module=webview \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
-            --nofollow-import-to=numpy ^
+            --nofollow-import-to=numpy \
             --nofollow-import-to=pandas \
-            --nofollow-import-to=scipy ^
+            --nofollow-import-to=scipy \
             --nofollow-import-to=tkinter \
             --macos-create-app-bundle \
             --macos-app-icon=frontend/assets/LensAnalysis-icon.icns \
