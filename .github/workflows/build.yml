@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-Windows
-          path: dist/LensAnalysis.exe
+          path: dist/LensAnalysis.exe.dist/**
 
   build-macos:
     runs-on: macos-latest
@@ -78,7 +78,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-macOS
-          path: dist/LensAnalysis.app
+          path: dist/LensAnalysis.dist/**
 
   build-linux:
     runs-on: ubuntu-latest
@@ -122,4 +122,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-Linux
-          path: dist/LensAnalysis
+          path: dist/LensAnalysis.dist/**
