@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend\plugins=backend/plugins --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console main.py
+          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console main.py
 
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
@@ -58,7 +58,6 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --include-data-dir=backend/plugins=backend/plugins \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.cocoa \
@@ -106,7 +105,6 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --include-data-dir=backend/plugins=backend/plugins \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.gtk \
