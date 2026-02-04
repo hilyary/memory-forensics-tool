@@ -28,11 +28,16 @@ jobs:
         run: |
           python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console main.py
 
+      - name: List build output
+        run: |
+          echo "=== dist directory ==="
+          dir dist\ || echo "dist directory not found"
+
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-Windows
-          path: dist/LensAnalysis.exe.dist/**
+          path: dist/LensAnalysis*
 
   build-macos:
     runs-on: macos-latest
@@ -73,11 +78,19 @@ jobs:
             --macos-app-version=1.0.0 \
             main.py
 
+      - name: List build output
+        run: |
+          echo "=== dist directory ==="
+          ls -la dist/ || echo "dist directory not found"
+          echo ""
+          echo "=== Looking for LensAnalysis ==="
+          find dist -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
+
       - name: Upload macOS app
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-macOS
-          path: dist/LensAnalysis.dist/**
+          path: dist/LensAnalysis*
 
   build-linux:
     runs-on: ubuntu-latest
@@ -116,8 +129,16 @@ jobs:
             --nofollow-import-to=tkinter \
             main.py
 
+      - name: List build output
+        run: |
+          echo "=== dist directory ==="
+          ls -la dist/ || echo "dist directory not found"
+          echo ""
+          echo "=== Looking for LensAnalysis ==="
+          find dist -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
+
       - name: Upload Linux app
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-Linux
-          path: dist/LensAnalysis.dist/**
+          path: dist/LensAnalysis*
