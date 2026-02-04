@@ -1,0 +1,136 @@
+name: Build with Nuitka (All Platforms)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Nuitka
+        run: pip install nuitka
+
+      - name: Install dependencies
+        run: |
+          pip install pywebview python-docx pefile pyyaml rich
+
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka --standalone --assume-yes-for-downloads ^
+            --output-dir=dist ^
+            --output-filename=LensAnalysis.exe ^
+            --jobs=4 ^
+            --include-data-dir=frontend=frontend ^
+            --include-data-dir=backend\plugins=backend/plugins ^
+            --include-module=webview ^
+            --nofollow-import-to=volatility3 ^
+            --nofollow-import-to=matplotlib ^
+            --nofollow-import-to=numpy ^
+            --nofollow-import-to=pandas ^
+            --nofollow-import-to=scipy ^
+            --nofollow-import-to=tkinter ^
+            --windows-disable-console ^
+            main.py
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v3
+        with:
+          name: LensAnalysis-Windows
+          path: dist/LensAnalysis.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Nuitka
+        run: pip install nuitka
+
+      - name: Install dependencies
+        run: |
+          pip install pywebview python-docx pefile pyyaml rich
+
+      - name: Build with Nuitka
+        # 关键：不排除 webview.platforms.*，让插件自动处理
+        run: |
+          python -m nuitka --standalone --assume-yes-for-downloads \
+            --output-dir=dist \
+            --output-filename=LensAnalysis \
+            --jobs=4 \
+            --include-data-dir=frontend=frontend \
+            --include-data-dir=backend/plugins=backend/plugins \
+            --include-module=webview \
+            --nofollow-import-to=volatility3 \
+            --nofollow-import-to=matplotlib \
+            --nofollow-import-to=numpy ^
+            --nofollow-import-to=pandas \
+            --nofollow-import-to=scipy ^
+            --nofollow-import-to=tkinter \
+            --macos-create-app-bundle \
+            --macos-app-icon=frontend/assets/LensAnalysis-icon.icns \
+            --macos-app-name=LensAnalysis \
+            --macos-app-version=1.0.0 \
+            main.py
+
+      - name: Upload macOS app
+        uses: actions/upload-artifact@v3
+        with:
+          name: LensAnalysis-macOS
+          path: dist/LensAnalysis.app
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Nuitka
+        run: pip install nuitka
+
+      - name: Install dependencies
+        run: |
+          pip install pywebview python-docx pefile pyyaml rich
+          sudo apt-get update
+          sudo apt-get install -y libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0
+
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka --standalone --assume-yes-for-downloads \
+            --output-dir=dist \
+            --output-filename=LensAnalysis \
+            --jobs=4 \
+            --include-data-dir=frontend=frontend \
+            --include-data-dir=backend/plugins=backend/plugins \
+            --include-module=webview \
+            --nofollow-import-to=volatility3 \
+            --nofollow-import-to=matplotlib \
+            --nofollow-import-to=numpy \
+            --nofollow-import-to=pandas \
+            --nofollow-import-to=scipy \
+            --nofollow-import-to=tkinter \
+            main.py
+
+      - name: Upload Linux app
+        uses: actions/upload-artifact@v3
+        with:
+          name: LensAnalysis-Linux
+          path: dist/LensAnalysis

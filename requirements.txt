@@ -1,0 +1,32 @@
+# Memory Forensics Tool - Python Dependencies
+# 内存取证工具 - Python 依赖
+
+# PyWebView - Desktop application framework
+pywebview>=4.4
+
+# Volatility 3 - Memory forensics framework
+volatility3>=2.27.0
+
+# Windows file type detection
+pywin32>=305; sys_platform == 'win32'
+
+# Report generation
+reportlab>=4.0.0
+python-docx>=0.8.11
+
+# Data processing
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Utilities
+python-magic>=0.4.27; sys_platform != 'win32'
+pytz>=2023.3
+
+# Network requests (for proxy support and symbol downloads)
+requests>=2.28.0
+PySocks>=1.7.1
+
+# Packaging tools (only needed when building executable)
+pyinstaller>=5.0
+nuitka>=1.5.0  # 推荐使用 Nuitka 打包（性能更好，防反编译更强）
+

@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.dylib
+*.dll
+*.exe
+
+# PyInstaller
+*.spec
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Nuitka
+*.build/
+*.dist/
+*.nuitka
+nuitka-crash-report.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+.pytest_cache/
+.temp_obfuscated/
+
+# Virtual environments
+venv/
+env/
+ENV/
