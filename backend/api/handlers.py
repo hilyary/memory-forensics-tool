@@ -4915,24 +4915,83 @@ class APIHandler:
     # ==================== Volatility 3 检测和安装 ====================
 
     def check_volatility3(self) -> Dict[str, Any]:
-        """检测 Volatility 3 是否已安装"""
+        """检测 Volatility 3 是否已安装（跨平台）"""
         try:
             import subprocess
             import shutil
+            import platform
 
-            # 检查 vol 命令是否可用
-            vol_path = shutil.which('vol')
+            system = platform.system()
+            logger.info(f"检测 Volatility 3，平台: {system}")
 
             # 检查是否能导入 volatility3 模块
             can_import = False
             try:
                 import volatility3
                 can_import = True
+                logger.info("Volatility 3 模块可导入")
             except ImportError:
-                pass
+                logger.info("Volatility 3 模块不可导入")
 
-            # 检查 vol 命令是否真的可用
+            # 检查 vol 命令是否可用（根据平台）
+            vol_path = None
             vol_works = False
+
+            if system == 'Windows':
+                # Windows: 检查 vol.exe
+                possible_commands = ['vol', 'vol.exe']
+                for cmd in possible_commands:
+                    path = shutil.which(cmd)
+                    if path:
+                        vol_path = path
+                        break
+
+                # 检查用户级安装路径
+                if not vol_path:
+                    home_paths = [
+                        Path.home() / 'AppData' / 'Local' / 'Programs' / 'Python' / 'Scripts' / 'vol.exe',
+                        Path.home() / 'AppData' / 'Roaming' / 'Python' / 'Scripts' / 'vol.exe',
+                    ]
+                    for path in home_paths:
+                        if path.exists():
+                            vol_path = str(path)
+                            break
+
+            elif system == 'Darwin':  # macOS
+                # macOS: 检查 vol
+                vol_path = shutil.which('vol')
+
+                # 检查用户级安装路径
+                if not vol_path:
+                    home_paths = [
+                        Path.home() / 'Library' / 'Python' / '3.9' / 'bin' / 'vol',
+                        Path.home() / 'Library' / 'Python' / '3.10' / 'bin' / 'vol',
+                        Path.home() / 'Library' / 'Python' / '3.11' / 'bin' / 'vol',
+                        Path.home() / 'Library' / 'Python' / '3.12' / 'bin' / 'vol',
+                        Path.home() / '.local' / 'bin' / 'vol',
+                    ]
+                    for path in home_paths:
+                        if path.exists():
+                            vol_path = str(path)
+                            break
+
+            else:  # Linux
+                # Linux: 检查 vol
+                vol_path = shutil.which('vol')
+
+                # 检查用户级和系统级路径
+                if not vol_path:
+                    possible_paths = [
+                        Path.home() / '.local' / 'bin' / 'vol',
+                        Path('/usr/local/bin/vol'),
+                        Path('/usr/bin/vol'),
+                    ]
+                    for path in possible_paths:
+                        if path.exists() and os.access(path, os.X_OK):
+                            vol_path = str(path)
+                            break
+
+            # 验证 vol 命令是否真的可用
             if vol_path:
                 try:
                     result = subprocess.run(
@@ -4940,9 +4999,16 @@ class APIHandler:
                         capture_output=True,
                         timeout=5
                     )
-                    vol_works = result.returncode == 0 or b'Volatility 3' in result.stderr
-                except Exception:
-                    pass
+                    # 检查输出是否包含 Volatility 3 标识
+                    output = result.stdout.decode('utf-8', errors='ignore') + result.stderr.decode('utf-8', errors='ignore')
+                    vol_works = result.returncode == 0 or 'Volatility 3' in output or 'volatility' in output.lower()
+                    if vol_works:
+                        logger.info(f"Vol 命令可用: {vol_path}")
+                    else:
+                        logger.warning(f"Vol 命令存在但不可用: {vol_path}")
+                except Exception as e:
+                    logger.warning(f"验证 vol 命令失败: {e}")
+                    vol_works = False
 
             installed = vol_works or can_import
 
@@ -4950,32 +5016,75 @@ class APIHandler:
                 'status': 'success',
                 'data': {
                     'installed': installed,
+                    'platform': system,
                     'vol_command': bool(vol_path),
                     'can_import': can_import,
                     'vol_works': vol_works,
-                    'vol_path': vol_path
+                    'vol_path': vol_path,
+                    'install_command': self._get_install_command(system)
                 }
             }
         except Exception as e:
-            logger.error(f"检测 Volatility 3 失败: {e}")
+            logger.error(f"检测 Volatility 3 失败: {e}", exc_info=True)
             return {
                 'status': 'error',
                 'message': f'检测失败: {str(e)}'
             }
 
+    def _get_install_command(self, platform: str) -> str:
+        """获取平台特定的安装命令"""
+        if platform == 'Windows':
+            return 'pip install volatility3'
+        elif platform == 'Darwin':
+            return 'pip3 install volatility3'
+        else:  # Linux
+            return 'pip3 install volatility3 --user'
+
     def install_volatility3(self) -> Dict[str, Any]:
-        """安装 Volatility 3（使用 subprocess 调用 pip）"""
+        """安装 Volatility 3（使用 pip，跨平台）"""
         try:
             import subprocess
             import sys
+            import platform
+
+            system = platform.system()
+            logger.info(f"安装 Volatility 3，平台: {system}")
+
+            # 检查 Python 是否可用
+            python_available = False
+            try:
+                result = subprocess.run(
+                    [sys.executable, '--version'],
+                    capture_output=True,
+                    timeout=5
+                )
+                python_available = result.returncode == 0
+            except Exception:
+                pass
+
+            if not python_available:
+                return {
+                    'status': 'error',
+                    'message': self._get_manual_install_message(system)
+                }
 
             # 显示加载提示
             self._show_loading('正在安装 Volatility 3，请稍候...')
 
             try:
-                # 使用当前 Python 解释器的 pip
+                # 构建安装命令
+                if system == 'Windows':
+                    cmd = [sys.executable, '-m', 'pip', 'install', 'volatility3']
+                else:
+                    # macOS/Linux 使用 pip3
+                    cmd = [sys.executable, '-m', 'pip', 'install', 'volatility3']
+                    if system == 'Linux':
+                        cmd.append('--user')  # Linux 默认用户级安装
+
+                logger.info(f"执行安装命令: {' '.join(cmd)}")
+
                 result = subprocess.run(
-                    [sys.executable, '-m', 'pip', 'install', 'volatility3'],
+                    cmd,
                     capture_output=True,
                     text=True,
                     timeout=300  # 5 分钟超时
@@ -4984,30 +5093,45 @@ class APIHandler:
                 if result.returncode == 0:
                     self._hide_loading()
                     logger.info("Volatility 3 安装成功")
+
+                    # 检查是否需要更新 PATH
+                    if system in ['Darwin', 'Linux']:
+                        message = 'Volatility 3 安装成功！\n\n如果 vol 命令不可用，请将以下路径添加到 PATH:\n~/Library/Python/3.9/bin (macOS)\n~/.local/bin (Linux)'
+                    else:
+                        message = 'Volatility 3 安装成功！\n\n现在可以使用内存分析功能了。'
+
                     return {
                         'status': 'success',
-                        'message': 'Volatility 3 安装成功！\n\n现在可以使用内存分析功能了。'
+                        'message': message
                     }
                 else:
                     self._hide_loading()
                     error_msg = result.stderr or result.stdout or '未知错误'
                     logger.error(f"Volatility 3 安装失败: {error_msg}")
+
+                    # 提供手动安装方案
                     return {
                         'status': 'error',
-                        'message': f'安装失败：\n{error_msg}'
+                        'message': f'自动安装失败：\n{error_msg}\n\n{self._get_manual_install_message(system)}'
                     }
             except subprocess.TimeoutExpired:
                 self._hide_loading()
                 return {
                     'status': 'error',
-                    'message': '安装超时，请检查网络连接或手动安装：\npip install volatility3'
+                    'message': f'安装超时，请检查网络连接。\n\n{self._get_manual_install_message(system)}'
+                }
+            except FileNotFoundError:
+                self._hide_loading()
+                return {
+                    'status': 'error',
+                    'message': f'未找到 pip 命令。\n\n{self._get_manual_install_message(system)}'
                 }
             except Exception as e:
                 self._hide_loading()
-                logger.error(f"安装 Volatility 3 异常: {e}")
+                logger.error(f"安装 Volatility 3 异常: {e}", exc_info=True)
                 return {
                     'status': 'error',
-                    'message': f'安装异常：{str(e)}'
+                    'message': f'安装异常：{str(e)}\n\n{self._get_manual_install_message(system)}'
                 }
         except Exception as e:
             self._hide_loading()
@@ -5034,3 +5158,35 @@ class APIHandler:
                 self.window.evaluate_js('if(window.hideLoading) window.hideLoading();')
             except Exception as e:
                 logger.warning(f"隐藏加载提示失败: {e}")
+
+    def _get_manual_install_message(self, platform: str) -> str:
+        """获取手动安装指引"""
+        if platform == 'Windows':
+            return """手动安装步骤：
+
+1. 打开命令提示符（CMD）或 PowerShell
+2. 运行命令：pip install volatility3
+3. 如果提示 pip 不存在，请先安装 Python：
+   https://www.python.org/downloads/
+4. 安装时勾选 "Add Python to PATH" """
+        elif platform == 'Darwin':  # macOS
+            return """手动安装步骤：
+
+1. 打开终端（Terminal）
+2. 运行命令：pip3 install volatility3
+3. 如果提示 pip3 不存在，请先安装 Python：
+   brew install python3
+   或访问 https://www.python.org/downloads/
+4. 安装后可能需要添加到 PATH：
+   export PATH=$PATH:~/Library/Python/3.9/bin """
+        else:  # Linux
+            return """手动安装步骤：
+
+1. 打开终端
+2. 运行命令：pip3 install volatility3 --user
+3. 如果提示 pip3 不存在，请先安装：
+   Ubuntu/Debian: sudo apt install python3-pip
+   CentOS/RHEL: sudo yum install python3-pip
+   Arch: sudo pacman -S python-pip
+4. 添加到 PATH（如果需要）：
+   export PATH=$PATH:~/.local/bin """

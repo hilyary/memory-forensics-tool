@@ -8066,19 +8066,32 @@
                         if (result.status === 'success' && result.data.installed) {
                             return true;
                         } else {
-                            // 显示安装提示对话框
-                            this.showVolatility3InstallDialog();
+                            // 显示安装提示对话框，传入检测结果
+                            this.showVolatility3InstallDialog(result.data || {});
                             return false;
                         }
                     } catch (error) {
                         console.error('检测 Volatility 3 失败:', error);
                         // 检测失败时也显示安装提示
-                        this.showVolatility3InstallDialog();
+                        this.showVolatility3InstallDialog({});
                         return false;
                     }
                 }
 
-                showVolatility3InstallDialog() {
+                showVolatility3InstallDialog(detectionResult = {}) {
+                    const platform = detectionResult.platform || 'Unknown';
+                    const installCommand = detectionResult.install_command || 'pip install volatility3';
+
+                    // 根据平台获取安装说明
+                    let platformNote = '';
+                    if (platform === 'Windows') {
+                        platformNote = 'Windows 系统将使用 pip 安装 Volatility 3。';
+                    } else if (platform === 'Darwin') {
+                        platformNote = 'macOS 系统将使用 pip3 安装 Volatility 3。';
+                    } else if (platform === 'Linux') {
+                        platformNote = 'Linux 系统将使用 pip3 --user 安装 Volatility 3。';
+                    }
+
                     const overlay = document.createElement('div');
                     overlay.className = 'vol3-install-overlay';
                     overlay.innerHTML = `
@@ -8090,7 +8103,7 @@
                             </div>
                             <h2>需要安装 Volatility 3</h2>
                             <p>析镜需要 Volatility 3 框架来进行内存分析。</p>
-                            <p class="vol3-install-note">Volatility 3 是一个开源的内存取证工具，将被自动安装到您的系统中。</p>
+                            <p class="vol3-install-note">${platformNote}</p>
                             <div class="vol3-install-actions">
                                 <button class="vol3-install-btn" id="installVol3Btn">
                                     <span>一键安装</span>
@@ -8099,7 +8112,7 @@
                                     稍后安装
                                 </button>
                             </div>
-                            <p class="vol3-install-hint">也可以手动安装：<code>pip install volatility3</code></p>
+                            <p class="vol3-install-hint">手动安装命令：<code>${installCommand}</code></p>
                         </div>
                     `;
                     document.body.appendChild(overlay);
