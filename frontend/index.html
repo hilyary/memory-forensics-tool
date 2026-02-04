@@ -51,6 +51,140 @@
         .registry-breadcrumb:not(.hidden) {
             display: flex;
         }
+
+        /* Volatility 3 安装对话框 */
+        .vol3-install-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .vol3-install-dialog {
+            background: var(--bg-primary, #ffffff);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: slideUp 0.3s ease-out;
+        }
+        .vol3-install-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .vol3-install-icon svg {
+            width: 48px;
+            height: 48px;
+        }
+        .vol3-install-dialog h2 {
+            margin: 0 0 16px;
+            font-size: 24px;
+            color: var(--text-primary, #1e293b);
+        }
+        .vol3-install-dialog p {
+            margin: 0 0 12px;
+            color: var(--text-secondary, #64748b);
+            line-height: 1.6;
+        }
+        .vol3-install-note {
+            font-size: 14px;
+            color: var(--text-tertiary, #94a3b8);
+            padding: 12px;
+            background: var(--bg-secondary, #f8fafc);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        .vol3-install-actions {
+            display: flex;
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .vol3-install-btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+        .vol3-install-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+        .vol3-install-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .vol3-install-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .vol3-install-btn.secondary {
+            background: var(--bg-secondary, #f1f5f9);
+            color: var(--text-secondary, #64748b);
+        }
+        .vol3-install-btn.secondary:hover {
+            background: var(--bg-tertiary, #e2e8f0);
+        }
+        .vol3-install-btn .installing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .vol3-install-btn .installing::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .vol3-install-hint {
+            font-size: 12px;
+            color: var(--text-tertiary, #94a3b8);
+        }
+        .vol3-install-hint code {
+            background: var(--bg-secondary, #f1f5f9);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 11px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
@@ -2327,22 +2461,36 @@
                     this.bindEvents();
 
                     // 等待 pywebview ready 事件
-                    document.addEventListener('pywebviewready', () => {
+                    document.addEventListener('pywebviewready', async () => {
                         updateDebug('✅ pywebviewready 事件触发!');
                         this.isWebView = true;
                         this.api = window.pywebview.api;
-                        this.setSystemStatus('Volatility 3 就绪', 'active');
                         updateDebug('模式: 完整模式');
                         updateDebug('API: ' + (this.api ? '可用' : '不可用'));
+
+                        // 检测 Volatility 3 是否已安装
+                        const vol3Installed = await this.checkVolatility3();
+                        if (vol3Installed) {
+                            this.setSystemStatus('Volatility 3 就绪', 'active');
+                        } else {
+                            this.setSystemStatus('等待 Volatility 3', 'warning');
+                        }
                     });
 
                     // 备用检测
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         if (!this.isWebView && window.pywebview && window.pywebview.api) {
                             updateDebug('✅ 直接检测到 pywebview.api');
                             this.isWebView = true;
                             this.api = window.pywebview.api;
-                            this.setSystemStatus('Volatility 3 就绪', 'active');
+
+                            // 检测 Volatility 3
+                            const vol3Installed = await this.checkVolatility3();
+                            if (vol3Installed) {
+                                this.setSystemStatus('Volatility 3 就绪', 'active');
+                            } else {
+                                this.setSystemStatus('等待 Volatility 3', 'warning');
+                            }
                             updateDebug('模式: 完整模式');
                         } else if (!this.isWebView) {
                             updateDebug('⚠️ 使用演示模式');
@@ -7906,6 +8054,100 @@
                 hideLoading() {
                     const loadingOverlay = document.getElementById('loadingOverlay');
                     if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                }
+
+                // ==================== Volatility 3 检测和安装 ====================
+
+                async checkVolatility3() {
+                    if (!this.api) return true; // 演示模式，不需要检测
+
+                    try {
+                        const result = await this.api.check_volatility3();
+                        if (result.status === 'success' && result.data.installed) {
+                            return true;
+                        } else {
+                            // 显示安装提示对话框
+                            this.showVolatility3InstallDialog();
+                            return false;
+                        }
+                    } catch (error) {
+                        console.error('检测 Volatility 3 失败:', error);
+                        // 检测失败时也显示安装提示
+                        this.showVolatility3InstallDialog();
+                        return false;
+                    }
+                }
+
+                showVolatility3InstallDialog() {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'vol3-install-overlay';
+                    overlay.innerHTML = `
+                        <div class="vol3-install-dialog">
+                            <div class="vol3-install-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <h2>需要安装 Volatility 3</h2>
+                            <p>析镜需要 Volatility 3 框架来进行内存分析。</p>
+                            <p class="vol3-install-note">Volatility 3 是一个开源的内存取证工具，将被自动安装到您的系统中。</p>
+                            <div class="vol3-install-actions">
+                                <button class="vol3-install-btn" id="installVol3Btn">
+                                    <span>一键安装</span>
+                                </button>
+                                <button class="vol3-install-btn secondary" id="closeVol3Dialog">
+                                    稍后安装
+                                </button>
+                            </div>
+                            <p class="vol3-install-hint">也可以手动安装：<code>pip install volatility3</code></p>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+
+                    // 绑定事件
+                    document.getElementById('installVol3Btn').addEventListener('click', () => {
+                        this.installVolatility3();
+                    });
+                    document.getElementById('closeVol3Dialog').addEventListener('click', () => {
+                        overlay.remove();
+                    });
+                }
+
+                async installVolatility3() {
+                    if (!this.api) return;
+
+                    const btn = document.getElementById('installVol3Btn');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="installing">安装中...</span>';
+                    }
+
+                    try {
+                        const result = await this.api.install_volatility3();
+                        if (result.status === 'success') {
+                            // 安装成功，移除对话框
+                            const overlay = document.querySelector('.vol3-install-overlay');
+                            if (overlay) overlay.remove();
+
+                            // 显示成功提示
+                            this.showToast('success', '安装成功', result.message);
+                            this.setSystemStatus('Volatility 3 就绪', 'active');
+                        } else {
+                            // 安装失败
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = '<span>重试安装</span>';
+                            }
+                            this.showToast('error', '安装失败', result.message);
+                        }
+                    } catch (error) {
+                        console.error('安装 Volatility 3 失败:', error);
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<span>重试安装</span>';
+                        }
+                        this.showToast('error', '安装失败', String(error));
+                    }
                 }
 
                 _showLoadingToast(message) {

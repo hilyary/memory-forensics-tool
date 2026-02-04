@@ -4911,3 +4911,126 @@ class APIHandler:
                 'status': 'error',
                 'message': f'下载Windows符号表失败: {str(e)}'
             }
+
+    # ==================== Volatility 3 检测和安装 ====================
+
+    def check_volatility3(self) -> Dict[str, Any]:
+        """检测 Volatility 3 是否已安装"""
+        try:
+            import subprocess
+            import shutil
+
+            # 检查 vol 命令是否可用
+            vol_path = shutil.which('vol')
+
+            # 检查是否能导入 volatility3 模块
+            can_import = False
+            try:
+                import volatility3
+                can_import = True
+            except ImportError:
+                pass
+
+            # 检查 vol 命令是否真的可用
+            vol_works = False
+            if vol_path:
+                try:
+                    result = subprocess.run(
+                        [vol_path, '--help'],
+                        capture_output=True,
+                        timeout=5
+                    )
+                    vol_works = result.returncode == 0 or b'Volatility 3' in result.stderr
+                except Exception:
+                    pass
+
+            installed = vol_works or can_import
+
+            return {
+                'status': 'success',
+                'data': {
+                    'installed': installed,
+                    'vol_command': bool(vol_path),
+                    'can_import': can_import,
+                    'vol_works': vol_works,
+                    'vol_path': vol_path
+                }
+            }
+        except Exception as e:
+            logger.error(f"检测 Volatility 3 失败: {e}")
+            return {
+                'status': 'error',
+                'message': f'检测失败: {str(e)}'
+            }
+
+    def install_volatility3(self) -> Dict[str, Any]:
+        """安装 Volatility 3（使用 subprocess 调用 pip）"""
+        try:
+            import subprocess
+            import sys
+
+            # 显示加载提示
+            self._show_loading('正在安装 Volatility 3，请稍候...')
+
+            try:
+                # 使用当前 Python 解释器的 pip
+                result = subprocess.run(
+                    [sys.executable, '-m', 'pip', 'install', 'volatility3'],
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 分钟超时
+                )
+
+                if result.returncode == 0:
+                    self._hide_loading()
+                    logger.info("Volatility 3 安装成功")
+                    return {
+                        'status': 'success',
+                        'message': 'Volatility 3 安装成功！\n\n现在可以使用内存分析功能了。'
+                    }
+                else:
+                    self._hide_loading()
+                    error_msg = result.stderr or result.stdout or '未知错误'
+                    logger.error(f"Volatility 3 安装失败: {error_msg}")
+                    return {
+                        'status': 'error',
+                        'message': f'安装失败：\n{error_msg}'
+                    }
+            except subprocess.TimeoutExpired:
+                self._hide_loading()
+                return {
+                    'status': 'error',
+                    'message': '安装超时，请检查网络连接或手动安装：\npip install volatility3'
+                }
+            except Exception as e:
+                self._hide_loading()
+                logger.error(f"安装 Volatility 3 异常: {e}")
+                return {
+                    'status': 'error',
+                    'message': f'安装异常：{str(e)}'
+                }
+        except Exception as e:
+            self._hide_loading()
+            logger.error(f"安装 Volatility 3 失败: {e}")
+            return {
+                'status': 'error',
+                'message': f'安装失败: {str(e)}'
+            }
+
+    def _show_loading(self, message: str = '处理中...'):
+        """显示加载提示"""
+        if hasattr(self, 'window') and self.window:
+            try:
+                self.window.evaluate_js(
+                    f'if(window.showLoading) window.showLoading("{message}");'
+                )
+            except Exception as e:
+                logger.warning(f"显示加载提示失败: {e}")
+
+    def _hide_loading(self):
+        """隐藏加载提示"""
+        if hasattr(self, 'window') and self.window:
+            try:
+                self.window.evaluate_js('if(window.hideLoading) window.hideLoading();')
+            except Exception as e:
+                logger.warning(f"隐藏加载提示失败: {e}")
