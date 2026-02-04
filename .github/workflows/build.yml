@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console main.py
+          python -m nuitka --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
 
       - name: List build output
         run: |
@@ -76,7 +76,7 @@ jobs:
             --macos-app-icon=frontend/assets/LensAnalysis-icon.icns \
             --macos-app-name=LensAnalysis \
             --macos-app-version=1.0.0 \
-            main.py
+            LensAnalysis.py
 
       - name: List build output
         run: |
@@ -127,7 +127,7 @@ jobs:
             --nofollow-import-to=pandas \
             --nofollow-import-to=scipy \
             --nofollow-import-to=tkinter \
-            main.py
+            LensAnalysis.py
 
       - name: List build output
         run: |
