@@ -4864,13 +4864,14 @@ if __name__ == '__main__':
     sys.exit(0 if success else 1)
 '''
 
-            # 创建临时脚本文件
-            temp_dir = Path(tempfile.gettempdir())
-            temp_script_path = temp_dir / f"download_symbols_{os.getpid()}.py"
+            # 创建固定位置的脚本文件
+            scripts_dir = self._user_data_dir / 'scripts'
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            script_path = scripts_dir / 'download_symbols.py'
 
             try:
                 # 写入脚本内容
-                temp_script_path.write_text(script_content)
+                script_path.write_text(script_content)
 
                 # 构建命令
                 if platform.system() == 'Windows':
@@ -4878,7 +4879,7 @@ if __name__ == '__main__':
                 else:
                     python_cmd = 'python3'
 
-                cmd = [python_cmd, str(temp_script_path), self.current_image['path'], str(self._symbols_dir)]
+                cmd = [python_cmd, str(script_path), self.current_image['path'], str(self._symbols_dir)]
 
                 logger.info(f"执行下载命令: {' '.join(cmd)}")
 
@@ -4931,12 +4932,8 @@ if __name__ == '__main__':
                     'message': f'执行下载脚本失败: {str(e)}'
                 }
             finally:
-                # 清理临时脚本
-                try:
-                    if temp_script_path.exists():
-                        temp_script_path.unlink()
-                except:
-                    pass
+                # 脚本保留在固定位置，方便调试
+                pass
 
         except Exception as e:
             self._hide_loading()
