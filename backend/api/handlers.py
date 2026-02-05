@@ -4763,51 +4763,42 @@ def download_symbols(image_path, symbols_dir):
             print(f"正在下载 PDB 文件...")
             print(f"  URL: {pdb_url}")
 
-            # 使用 requests 库（支持代理和进度条）
+            # 使用 urllib 下载（最快）
+            import urllib.request as req2
+
+            # 检测系统代理
+            proxies = None
             try:
-                import requests
-            except ImportError:
-                print("警告: requests 库未安装，使用 urllib（无进度显示）")
-                import urllib.request as req2
-                req2.urlretrieve(pdb_url, str(temp_pdb_path))
-                pdb_size = temp_pdb_path.stat().st_size
-                print(f"PDB 下载完成: {pdb_size} bytes")
-            else:
-                # 检测系统代理
-                proxies = None
-                try:
-                    # macOS/Linux 代理检测
-                    http_proxy = os.environ.get('http_proxy') or os.environ.get('HTTP_PROXY')
-                    https_proxy = os.environ.get('https_proxy') or os.environ.get('HTTPS_PROXY')
-                    if http_proxy or https_proxy:
-                        proxies = {}
-                        if http_proxy:
-                            proxies['http'] = http_proxy
-                        if https_proxy:
-                            proxies['https'] = https_proxy
-                        print(f"检测到代理: {proxies}")
-                except:
-                    pass
+                http_proxy = os.environ.get('http_proxy') or os.environ.get('HTTP_PROXY')
+                https_proxy = os.environ.get('https_proxy') or os.environ.get('HTTPS_PROXY')
+                if http_proxy or https_proxy:
+                    # 创建代理处理器
+                    proxy_handler = req2.ProxyHandler({
+                        'http': http_proxy or '',
+                        'https': https_proxy or ''
+                    })
+                    opener = req2.build_opener(proxy_handler)
+                    req2.install_opener(opener)
+                    print(f"检测到代理配置")
+            except:
+                pass
 
-                # 下载并显示进度（增大 chunk_size 提升速度）
-                response = requests.get(pdb_url, proxies=proxies, stream=True, timeout=60)
-                total_size = int(response.headers.get('content-length', 0))
-                downloaded = 0
-                chunk_size = 1048576  # 1MB chunks，提升下载速度
-                last_percent = -1
+            # 进度回调函数
+            def show_progress(block_num, block_size, total_size):
+                downloaded = block_num * block_size
+                if total_size > 0:
+                    percent = min(int(downloaded * 100 / total_size), 100)
+                    # 每下载 25% 显示一次进度
+                    if percent % 25 == 0 and percent > 0:
+                        filled = percent // 5
+                        bar = '=' * filled + ' ' * (20 - filled)
+                        print(f"\r  下载进度: [{bar}] {percent}%", end='', flush=True)
+                if downloaded >= total_size and total_size > 0:
+                    print()  # 换行
 
-                with open(temp_pdb_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=chunk_size):
-                        if chunk:
-                            f.write(chunk)
-                            downloaded += len(chunk)
-                            if total_size > 0:
-                                percent = int(downloaded * 100 / total_size)
-                                if percent > 0 and percent % 25 == 0 and percent != last_percent:
-                                    print(f"  下载进度: {percent}%")
-                                    last_percent = percent
-
-                print(f"PDB 下载完成: {downloaded} bytes")
+            req2.urlretrieve(pdb_url, str(temp_pdb_path), reporthook=show_progress)
+            pdb_size = temp_pdb_path.stat().st_size
+            print(f"PDB 下载完成: {pdb_size} bytes")
 
             # 转换 PDB 为 ISF 格式
             print("正在转换 PDB 为 ISF 格式...")
