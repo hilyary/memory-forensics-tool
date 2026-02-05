@@ -120,11 +120,11 @@ def download_symbols(image_path: str, symbols_dir: str = None):
                 except:
                     pass
 
-                # 下载并显示进度
+                # 下载并显示进度（增大 chunk_size 提升速度）
                 response = requests.get(pdb_url, proxies=proxies, stream=True, timeout=60)
                 total_size = int(response.headers.get('content-length', 0))
                 downloaded = 0
-                chunk_size = 8192
+                chunk_size = 1048576  # 1MB chunks，提升下载速度
                 last_percent = -1
 
                 with open(temp_pdb_path, 'wb') as f:
@@ -134,8 +134,8 @@ def download_symbols(image_path: str, symbols_dir: str = None):
                             downloaded += len(chunk)
                             if total_size > 0:
                                 percent = int(downloaded * 100 / total_size)
-                                if percent % 10 == 0 and percent != last_percent:
-                                    print(f"  下载进度: {percent}% ({downloaded}/{total_size} bytes)")
+                                if percent > 0 and percent % 25 == 0 and percent != last_percent:
+                                    print(f"  下载进度: {percent}%")
                                     last_percent = percent
 
                 print(f"PDB 下载完成: {downloaded} bytes")
