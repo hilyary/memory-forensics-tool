@@ -473,6 +473,18 @@ class VolatilityWrapper:
         # 使用制表符或空格分隔
         results = []
         for line in data_lines:
+            # 对于 printkey，跳过 REG_BINARY 的续行（十六进制数据续行）
+            # 续行特征：只有2列，且第一列是十六进制数据
+            if 'printkey' in plugin_name and len(line.split()) == 2:
+                # 检查是否是十六进制续行（第一列都是十六进制字节）
+                parts_check = line.split()
+                if len(parts_check) == 2:
+                    # 检查第一列是否全是十六进制字节（用空格分隔的2位十六进制数）
+                    first_col = parts_check[0].split()
+                    if all(len(b) == 2 and all(c in '0123456789abcdefABCDEF' for c in b) for b in first_col[:8]):
+                        # 这是续行，跳过
+                        continue
+
             if '\t' in line:
                 parts = line.split('\t')
             else:
