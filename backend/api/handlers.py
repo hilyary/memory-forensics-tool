@@ -4814,14 +4814,16 @@ def download_symbols(image_path, symbols_dir):
             reader = pdbutil.pdbconv.PdbReader(new_context, temp_pdb_url, pdb_name)
             json_output = reader.get_json()
 
-            print(f"符号表转换成功，JSON 大小: {len(json_output)} bytes")
+            # 将字典转换为 JSON 字符串
+            json_str = json.dumps(json_output, indent=2, sort_keys=True)
+            print(f"符号表转换成功，JSON 大小: {len(json_str)} bytes")
 
             # 确保目录存在
             os.makedirs(os.path.dirname(symbol_path), exist_ok=True)
 
             # 保存为JSON.xz文件
             with lzma.open(symbol_path, 'w') as f:
-                f.write(bytes(json.dumps(json_output, indent=2, sort_keys=True), 'utf-8'))
+                f.write(bytes(json_str, 'utf-8'))
 
             print(f"符号表已保存: {symbol_path}")
             print(f"符号表大小: {symbol_path.stat().st_size} bytes")
