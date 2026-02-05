@@ -590,6 +590,7 @@ class VolatilityWrapper:
         # 检查是否包含至少2个表头关键词（只在列名中检查）
         header_as_columns = sum(1 for keyword in header_keywords if any(keyword in part for part in parts))
         if header_as_columns >= 2:
+            logger.info(f"通过关键词识别为表头行: {line[:80]}, 匹配数={header_as_columns}")
             return True
 
         # 调试：显示未识别为表头的行
@@ -597,6 +598,7 @@ class VolatilityWrapper:
 
         # 特殊处理：注册表相关表头（多词表头）
         if 'Last Write Time' in line or 'Hive Offset' in line or 'Key Name' in line:
+            logger.info(f"识别为注册表表头行: {line[:80]}")
             return True
 
         # printkey 插件的特定表头关键词组合
