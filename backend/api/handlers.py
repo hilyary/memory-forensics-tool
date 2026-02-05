@@ -4743,6 +4743,13 @@ class APIHandler:
                     'message': f'执行下载脚本失败: {str(e)}'
                 }
 
+        except Exception as e:
+            self._hide_loading()
+            logger.error(f"下载Windows符号表失败: {str(e)}", exc_info=True)
+            return {
+                'status': 'error',
+                'message': f'下载Windows符号表失败: {str(e)}'
+            }
 
     # ==================== Volatility 3 检测和安装 ====================
 
