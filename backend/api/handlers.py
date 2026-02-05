@@ -4770,12 +4770,13 @@ def download_symbols(image_path, symbols_dir):
                 print("警告: requests 库未安装，使用 urllib（无进度显示）")
                 import urllib.request as req2
                 req2.urlretrieve(pdb_url, str(temp_pdb_path))
+                pdb_size = temp_pdb_path.stat().st_size
+                print(f"PDB 下载完成: {pdb_size} bytes")
             else:
                 # 检测系统代理
                 proxies = None
                 try:
                     # macOS/Linux 代理检测
-                    import os
                     http_proxy = os.environ.get('http_proxy') or os.environ.get('HTTP_PROXY')
                     https_proxy = os.environ.get('https_proxy') or os.environ.get('HTTPS_PROXY')
                     if http_proxy or https_proxy:
