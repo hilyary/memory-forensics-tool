@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich
+          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa
 
       - name: Build with Nuitka
         run: |
@@ -64,8 +64,12 @@ jobs:
             --jobs=4 \
             --include-data-dir=frontend=frontend \
             --include-module=webview.platforms.cocoa \
-            --include-module=pyobjc \
+            --include-module=objc \
             --include-module=PyObjCTools \
+            --include-module=CoreFoundation \
+            --include-module=Foundation \
+            --include-module=AppKit \
+            --include-module=WebKit \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
