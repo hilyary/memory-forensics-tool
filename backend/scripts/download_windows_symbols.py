@@ -124,9 +124,9 @@ def download_symbols(image_path: str, symbols_dir: str = None):
                     if percent % 25 == 0 and percent > 0:
                         filled = percent // 5
                         bar = '=' * filled + ' ' * (20 - filled)
-                        print(f"\r  下载进度: [{bar}] {percent}%", end='', flush=True)
+                        print(f"  下载进度: [{bar}] {percent}%")
                 if downloaded >= total_size and total_size > 0:
-                    print()  # 换行
+                    pass  # 下载完成
 
             req2.urlretrieve(pdb_url, str(temp_pdb_path), reporthook=show_progress)
             pdb_size = temp_pdb_path.stat().st_size
