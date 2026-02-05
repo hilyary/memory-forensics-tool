@@ -63,7 +63,6 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --include-data-dir=backend/scripts=backend/scripts \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.cocoa \
