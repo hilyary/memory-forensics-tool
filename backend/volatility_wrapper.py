@@ -465,6 +465,9 @@ class VolatilityWrapper:
             if not line.strip() or line.startswith('Progress'):
                 continue
             is_header = self._is_header_row(line, plugin_name)
+            # 对于 printkey，记录每一行的处理
+            if 'printkey' in plugin_name.lower():
+                logger.warning(f"[printkey处理] 行: {line[:60]}, 是否表头: {is_header}")
             # 跳过表头行（检查是否包含连续的表头关键词）
             if is_header:
                 continue
@@ -590,7 +593,7 @@ class VolatilityWrapper:
         # 检查是否包含至少2个表头关键词（只在列名中检查）
         header_as_columns = sum(1 for keyword in header_keywords if any(keyword in part for part in parts))
         if header_as_columns >= 2:
-            logger.info(f"通过关键词识别为表头行: {line[:80]}, 匹配数={header_as_columns}")
+            logger.warning(f"[表头检测] 通过关键词识别为表头行: {line[:80]}, 匹配数={header_as_columns}")
             return True
 
         # 调试：显示未识别为表头的行
@@ -598,7 +601,7 @@ class VolatilityWrapper:
 
         # 特殊处理：注册表相关表头（多词表头）
         if 'Last Write Time' in line or 'Hive Offset' in line or 'Key Name' in line:
-            logger.info(f"识别为注册表表头行: {line[:80]}")
+            logger.warning(f"[表头检测] 识别为注册表表头行，将跳过: {line[:80]}")
             return True
 
         # printkey 插件的特定表头关键词组合
