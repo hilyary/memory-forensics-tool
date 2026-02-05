@@ -88,6 +88,8 @@ jobs:
           chmod +x dist/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
           # 移除隔离属性（避免 macOS Gatekeeper 阻止）
           xattr -d com.apple.quarantine dist/LensAnalysis.app 2>/dev/null || true
+          # Ad-hoc 代码签名（允许双击打开）
+          codesign --force --deep --sign - dist/LensAnalysis.app
           echo "=== Permissions fixed ==="
           ls -la dist/LensAnalysis.app/Contents/MacOS/
 
