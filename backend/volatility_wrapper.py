@@ -540,6 +540,11 @@ class VolatilityWrapper:
             logger.warning(f"[表头检测] 识别为注册表表头行，将跳过: {line[:80]}")
             return True
 
+        # hivelist 表头检查：Offset FileFullPath ...
+        if line.startswith('Offset') and ('FileFullPath' in line or 'File' in line):
+            logger.warning(f"[表头检测] 识别为 hivelist 表头行，将跳过: {line[:80]}")
+            return True
+
         # 优先用制表符分隔，如果没有制表符则用空格分隔
         if '\t' in line:
             parts = line.split('\t')
