@@ -82,20 +82,31 @@ jobs:
       - name: Copy PyObjC Python files
         run: |
           echo "=== Copying PyObjC .py files ==="
+
+          # 找到 site-packages 路径
+          SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
+          echo "Site packages: $SITE_PACKAGES"
+
           # 创建 objc 目录
           mkdir -p dist/LensAnalysis.app/Contents/MacOS/objc
           mkdir -p dist/LensAnalysis.app/Contents/MacOS/WebKit
 
           # 复制 objc 的 .py 文件
-          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/objc/*.py dist/LensAnalysis.app/Contents/MacOS/objc/
+          if [ -d "$SITE_PACKAGES/objc" ]; then
+            cp "$SITE_PACKAGES/objc/"*.py dist/LensAnalysis.app/Contents/MacOS/objc/ 2>/dev/null || true
+            echo "Copied objc .py files"
+          else
+            echo "Warning: objc directory not found at $SITE_PACKAGES/objc"
+          fi
 
           # 复制 Foundation, AppKit, CoreFoundation, WebKit 的 .py 文件
-          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/Foundation/*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
-          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/AppKit/*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
-          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/CoreFoundation/*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
-          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/WebKit/__init__.py dist/LensAnalysis.app/Contents/MacOS/WebKit/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/Foundation/"*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/AppKit/"*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/CoreFoundation/"*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/WebKit/__init__.py" dist/LensAnalysis.app/Contents/MacOS/WebKit/ 2>/dev/null || true
 
           echo "PyObjC files copied"
+          ls -la dist/LensAnalysis.app/Contents/MacOS/objc/ || echo "objc directory is empty or doesn't exist"
 
       - name: Fix executable permissions
         run: |
