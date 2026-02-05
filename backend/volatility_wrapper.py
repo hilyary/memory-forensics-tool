@@ -596,8 +596,16 @@ class VolatilityWrapper:
         logger.debug(f"未识别表头行: parts={len(parts)}, header_as_columns={header_as_columns}, parts[:3]={parts[:3] if len(parts) >= 3 else parts}")
 
         # 特殊处理：注册表相关表头（多词表头）
-        if 'Last Write Time' in line or 'Hive Offset' in line:
+        if 'Last Write Time' in line or 'Hive Offset' in line or 'Key Name' in line:
             return True
+
+        # printkey 插件的特定表头关键词组合
+        if 'printkey' in plugin_name:
+            # 检查是否同时包含多个 printkey 表头关键词
+            printkey_headers = ['Last', 'Write', 'Time', 'Hive', 'Offset', 'Type', 'Key', 'Name', 'Data', 'Volatile']
+            matching_count = sum(1 for header in printkey_headers if header in line)
+            if matching_count >= 4:  # 如果包含至少4个表头关键词，认为是表头行
+                return True
 
         # 对于只有 2 列的情况（如 banners），检查第二列是否是表头关键词
         if len(parts) == 2:
