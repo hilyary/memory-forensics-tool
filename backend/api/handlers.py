@@ -2305,16 +2305,20 @@ class APIHandler:
             results = wrapper._run_volatility('banners.Banners', use_symbols=False)
             logger.info(f"banners.Banners 返回结果类型: {type(results)}, 数量: {len(results) if results else 0}")
 
-            if results and len(results) > 0:
-                logger.info(f"results[0] 内容: {results[0]}")
-                banner = results[0].get('banner', '')
-                if banner:
+            if results and len(results) > 1:
+                logger.info(f"results[0] 内容（表头）: {results[0]}")
+                logger.info(f"results[1] 内容（数据）: {results[1]}")
+                # 跳过第一行（表头），使用第二行（实际数据）
+                banner = results[1].get('banner', '')
+                if banner and banner != 'Banner':  # 确保不是表头
                     logger.info(f"获取到 banner: {banner[:100]}...")
                     # 缓存起来
                     self._cached_banner = banner
                     return banner
                 else:
-                    logger.warning(f"results[0] 中没有 'banner' 字段，可用的字段: {list(results[0].keys()) if results[0] else 'N/A'}")
+                    logger.warning(f"results[1] 中的 banner 无效或为表头")
+            elif results and len(results) == 1:
+                logger.warning(f"banners.Banners 只返回了表头，没有实际数据")
             else:
                 logger.warning(f"banners.Banners 返回了空结果或None")
 
