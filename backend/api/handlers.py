@@ -803,6 +803,35 @@ class APIHandler:
                     except ImportError as e:
                         # 打包后无法导入 volatility3 模块，这是正常的
                         logger.info(f"打包后无法使用 volatility3 模块获取 PDB 信息（功能正常）: {e}")
+
+                        # 尝试从之前保存的文件读取 PDB 信息
+                        try:
+                            pdb_info_path = self._symbols_dir / 'windows' / 'pdb_info.json'
+                            if pdb_info_path.exists():
+                                import json
+                                saved_pdb_info = json.loads(pdb_info_path.read_text())
+                                # 检查是否是当前镜像的 PDB 信息
+                                if saved_pdb_info.get('image_path') == self.current_image.get('path'):
+                                    pdb_name = saved_pdb_info.get('name')
+                                    guid = saved_pdb_info.get('guid')
+                                    age = saved_pdb_info.get('age')
+
+                                    # 检查符号表文件是否存在
+                                    symbol_path = self._symbols_dir / 'windows' / pdb_name / f"{guid}-{age}.json.xz"
+                                    is_match = symbol_path.exists()
+
+                                    symbol_status['windows']['pdb_info'] = {
+                                        'name': pdb_name,
+                                        'guid': guid,
+                                        'age': age,
+                                        'symbol_exists': is_match,
+                                        'symbol_path': str(symbol_path) if is_match else None
+                                    }
+                                    logger.info(f"从文件读取 PDB 信息: {pdb_name} - {guid}-{age}, 符号表匹配: {is_match}")
+                                else:
+                                    logger.info(f"保存的 PDB 信息不匹配当前镜像")
+                        except Exception as e2:
+                            logger.warning(f"从文件读取 PDB 信息失败: {e2}")
                     except Exception as e:
                         logger.warning(f"获取Windows PDB信息失败: {e}")
 
@@ -4984,10 +5013,40 @@ if __name__ == '__main__':
                     self._hide_loading()
                     output = result.stdout + result.stderr
                     logger.info(f"符号表下载成功:\n{output}")
-                    # 只显示简洁消息，不显示技术日志
+
+                    # 解析 PDB 信息并保存
+                    pdb_info = None
+                    try:
+                        import re
+                        pdb_match = re.search(r'找到 PDB 信息:\s*(\S+)', output)
+                        guid_match = re.search(r'GUID:\s*([0-9A-Fa-f]+)', output)
+                        age_match = re.search(r'Age:\s*(\d+)', output)
+
+                        if pdb_match and guid_match and age_match:
+                            pdb_name = pdb_match.group(1)
+                            guid = guid_match.group(1)
+                            age = int(age_match.group(1))
+
+                            # 保存 PDB 信息到文件
+                            pdb_info_path = self._symbols_dir / 'windows' / 'pdb_info.json'
+                            pdb_info_path.parent.mkdir(parents=True, exist_ok=True)
+
+                            import json
+                            pdb_info = {
+                                'name': pdb_name,
+                                'guid': guid,
+                                'age': age,
+                                'image_path': self.current_image['path']
+                            }
+                            pdb_info_path.write_text(json.dumps(pdb_info, indent=2))
+                            logger.info(f"已保存 PDB 信息到: {pdb_info_path}")
+                    except Exception as e:
+                        logger.warning(f"解析或保存 PDB 信息失败: {e}")
+
                     return {
                         'status': 'success',
-                        'message': 'Windows符号表下载成功！'
+                        'message': 'Windows符号表下载成功！',
+                        'pdb_info': pdb_info
                     }
                 else:
                     self._hide_loading()
