@@ -1137,6 +1137,12 @@ class APIHandler:
                         try:
                             import socks
                             import socket as socket_module
+                            import ssl
+
+                            # 创建 SSL 上下文以避免证书验证失败
+                            ssl_context = ssl.create_default_context()
+                            ssl_context.check_hostname = False
+                            ssl_context.verify_mode = ssl.CERT_NONE
 
                             sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                             # 解析代理地址
@@ -1148,7 +1154,9 @@ class APIHandler:
                             # 创建 SOCKS 代理 opener
                             socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
                             socket_module.socket = socks.socksocket
-                            response = urllib.request.urlopen(req, timeout=30)
+
+                            # 使用 SSL 上下文打开 URL
+                            response = urllib.request.urlopen(req, timeout=30, context=ssl_context)
                         except ImportError:
                             logger.warning("未安装 PySocks 库，SOCKS 代理不可用。请运行: pip install PySocks")
                             return {
@@ -1426,6 +1434,13 @@ class APIHandler:
                     try:
                         import socks
                         import socket as socket_module
+                        import ssl
+
+                        # 创建 SSL 上下文以避免证书验证失败
+                        ssl_context = ssl.create_default_context()
+                        ssl_context.check_hostname = False
+                        ssl_context.verify_mode = ssl.CERT_NONE
+
                         sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                         proxy_host = self._proxy_config.get('host')
                         proxy_port = self._proxy_config.get('port')
@@ -1433,7 +1448,9 @@ class APIHandler:
                         proxy_pass = self._proxy_config.get('password')
                         socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
                         socket_module.socket = socks.socksocket
-                        response = urllib.request.urlopen(req, timeout=30)
+
+                        # 使用 SSL 上下文打开 URL
+                        response = urllib.request.urlopen(req, timeout=30, context=ssl_context)
                     except ImportError:
                         return {
                             'status': 'error',
@@ -1551,6 +1568,13 @@ class APIHandler:
                         try:
                             import socks
                             import socket as socket_module
+                            import ssl
+
+                            # 创建 SSL 上下文以避免证书验证失败
+                            ssl_context = ssl.create_default_context()
+                            ssl_context.check_hostname = False
+                            ssl_context.verify_mode = ssl.CERT_NONE
+
                             sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                             proxy_host = self._proxy_config.get('host')
                             proxy_port = self._proxy_config.get('port')
@@ -1558,7 +1582,9 @@ class APIHandler:
                             proxy_pass = self._proxy_config.get('password')
                             socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
                             socket_module.socket = socks.socksocket
-                            response = urllib.request.urlopen(req, timeout=60)
+
+                            # 使用 SSL 上下文打开 URL
+                            response = urllib.request.urlopen(req, timeout=60, context=ssl_context)
                         except ImportError:
                             return {
                                 'status': 'error',
