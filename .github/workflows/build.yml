@@ -79,6 +79,24 @@ jobs:
             --macos-app-version=1.0.0 \
             LensAnalysis.py
 
+      - name: Copy PyObjC Python files
+        run: |
+          echo "=== Copying PyObjC .py files ==="
+          # 创建 objc 目录
+          mkdir -p dist/LensAnalysis.app/Contents/MacOS/objc
+          mkdir -p dist/LensAnalysis.app/Contents/MacOS/WebKit
+
+          # 复制 objc 的 .py 文件
+          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/objc/*.py dist/LensAnalysis.app/Contents/MacOS/objc/
+
+          # 复制 Foundation, AppKit, CoreFoundation, WebKit 的 .py 文件
+          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/Foundation/*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/AppKit/*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/CoreFoundation/*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp /Users/runner/Library/Python/3.9/lib/python/site-packages/WebKit/__init__.py dist/LensAnalysis.app/Contents/MacOS/WebKit/ 2>/dev/null || true
+
+          echo "PyObjC files copied"
+
       - name: Fix executable permissions
         run: |
           echo "=== Fixing executable permissions ==="
