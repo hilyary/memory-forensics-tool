@@ -4870,11 +4870,24 @@ if __name__ == '__main__':
 
                 cmd = [python_cmd, str(script_path), self.current_image['path'], str(self._symbols_dir)]
 
+                # 传递用户配置的代理给子进程
+                import os as os_module
+                env = os_module.environ.copy()
+
+                # 如果用户配置了代理，设置到环境变量
+                proxy_url = self._build_proxy_url()
+                if proxy_url:
+                    # 将代理 URL 转换为 urllib 格式
+                    env['http_proxy'] = proxy_url
+                    env['https_proxy'] = proxy_url
+                    logger.info(f"下载脚本使用代理: {proxy_url.split('@')[0] if '@' in proxy_url else proxy_url}")
+
                 logger.info(f"执行下载命令: {' '.join(cmd)}")
 
                 # 执行下载脚本
                 result = subprocess.run(
                     cmd,
+                    env=env,
                     capture_output=True,
                     text=True,
                     timeout=300  # 5分钟超时
