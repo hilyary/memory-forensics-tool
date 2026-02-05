@@ -1139,10 +1139,16 @@ class APIHandler:
                             import socket as socket_module
                             import ssl
 
-                            # 创建 SSL 上下文以避免证书验证失败
-                            ssl_context = ssl.create_default_context()
-                            ssl_context.check_hostname = False
-                            ssl_context.verify_mode = ssl.CERT_NONE
+                            # 保存原始函数并设置新的 SSL 上下文创建函数
+                            _original_create_context = ssl._create_default_https_context
+
+                            def _create_unverified_context():
+                                ctx = ssl.create_default_context()
+                                ctx.check_hostname = False
+                                ctx.verify_mode = ssl.CERT_NONE
+                                return ctx
+
+                            ssl._create_default_https_context = _create_unverified_context
 
                             sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                             # 解析代理地址
@@ -1155,8 +1161,11 @@ class APIHandler:
                             socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
                             socket_module.socket = socks.socksocket
 
-                            # 使用 SSL 上下文打开 URL
-                            response = urllib.request.urlopen(req, timeout=30, context=ssl_context)
+                            # 打开 URL（会使用我们设置的 SSL 上下文创建函数）
+                            response = urllib.request.urlopen(req, timeout=30)
+
+                            # 恢复原始函数
+                            ssl._create_default_https_context = _original_create_context
                         except ImportError:
                             logger.warning("未安装 PySocks 库，SOCKS 代理不可用。请运行: pip install PySocks")
                             return {
@@ -1436,10 +1445,16 @@ class APIHandler:
                         import socket as socket_module
                         import ssl
 
-                        # 创建 SSL 上下文以避免证书验证失败
-                        ssl_context = ssl.create_default_context()
-                        ssl_context.check_hostname = False
-                        ssl_context.verify_mode = ssl.CERT_NONE
+                        # 保存原始函数并设置新的 SSL 上下文创建函数
+                        _original_create_context = ssl._create_default_https_context
+
+                        def _create_unverified_context():
+                            ctx = ssl.create_default_context()
+                            ctx.check_hostname = False
+                            ctx.verify_mode = ssl.CERT_NONE
+                            return ctx
+
+                        ssl._create_default_https_context = _create_unverified_context
 
                         sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                         proxy_host = self._proxy_config.get('host')
@@ -1449,8 +1464,11 @@ class APIHandler:
                         socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
                         socket_module.socket = socks.socksocket
 
-                        # 使用 SSL 上下文打开 URL
-                        response = urllib.request.urlopen(req, timeout=30, context=ssl_context)
+                        # 打开 URL（会使用我们设置的 SSL 上下文创建函数）
+                        response = urllib.request.urlopen(req, timeout=30)
+
+                        # 恢复原始函数
+                        ssl._create_default_https_context = _original_create_context
                     except ImportError:
                         return {
                             'status': 'error',
@@ -1570,10 +1588,16 @@ class APIHandler:
                             import socket as socket_module
                             import ssl
 
-                            # 创建 SSL 上下文以避免证书验证失败
-                            ssl_context = ssl.create_default_context()
-                            ssl_context.check_hostname = False
-                            ssl_context.verify_mode = ssl.CERT_NONE
+                            # 保存原始函数并设置新的 SSL 上下文创建函数
+                            _original_create_context = ssl._create_default_https_context
+
+                            def _create_unverified_context():
+                                ctx = ssl.create_default_context()
+                                ctx.check_hostname = False
+                                ctx.verify_mode = ssl.CERT_NONE
+                                return ctx
+
+                            ssl._create_default_https_context = _create_unverified_context
 
                             sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                             proxy_host = self._proxy_config.get('host')
@@ -1583,8 +1607,11 @@ class APIHandler:
                             socks.set_default_proxy(sock_type, proxy_host, proxy_port, proxy_user, proxy_pass)
                             socket_module.socket = socks.socksocket
 
-                            # 使用 SSL 上下文打开 URL
-                            response = urllib.request.urlopen(req, timeout=60, context=ssl_context)
+                            # 打开 URL（会使用我们设置的 SSL 上下文创建函数）
+                            response = urllib.request.urlopen(req, timeout=60)
+
+                            # 恢复原始函数
+                            ssl._create_default_https_context = _original_create_context
                         except ImportError:
                             return {
                                 'status': 'error',
@@ -2898,6 +2925,18 @@ class APIHandler:
                         try:
                             import socks
                             import socket as socket_module
+                            import ssl
+
+                            # 保存原始函数并设置新的 SSL 上下文创建函数
+                            _original_create_context = ssl._create_default_https_context
+
+                            def _create_unverified_context():
+                                ctx = ssl.create_default_context()
+                                ctx.check_hostname = False
+                                ctx.verify_mode = ssl.CERT_NONE
+                                return ctx
+
+                            ssl._create_default_https_context = _create_unverified_context
 
                             sock_type = socks.PROXY_TYPE_SOCKS5 if 'socks5' in proxy_url else socks.PROXY_TYPE_SOCKS4
                             proxy_host = self._proxy_config.get('host')
@@ -2910,9 +2949,11 @@ class APIHandler:
 
                             urllib.request.urlretrieve(url, zip_path)
 
-                            # 恢复原始 socket
+                            # 恢复原始函数和 socket
+                            ssl._create_default_https_context = _original_create_context
                             try:
-                                socket_module.socket = socket_module._original_socket
+                                import socket as socket_module2
+                                socket_module2.socket = socket_module2._socket.socket
                             except:
                                 pass
                         except ImportError:
