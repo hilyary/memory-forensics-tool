@@ -4996,7 +4996,16 @@
                             } else {
                                 this.toast('success', '下载成功', result.message || 'Windows符号表已成功安装');
                             }
+
+                            // 等待 toast 显示完成后再刷新状态
+                            await new Promise(resolve => setTimeout(resolve, 500));
                             await this.loadSymbolStatus(); // 刷新状态
+
+                            // 确保符号表管理对话框是打开的，如果没打开则打开它
+                            const overlay = document.getElementById('symbolManagerOverlay');
+                            if (overlay && overlay.classList.contains('hidden')) {
+                                this.openSymbolManager();
+                            }
 
                             // 移除提示框
                             const hintDiv = document.getElementById('symbolHint');

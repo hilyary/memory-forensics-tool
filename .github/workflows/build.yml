@@ -78,6 +78,19 @@ jobs:
             --macos-app-version=1.0.0 \
             LensAnalysis.py
 
+      - name: Fix executable permissions
+        run: |
+          echo "=== Fixing executable permissions ==="
+          # 给 app bundle 内的所有可执行文件添加执行权限
+          find dist/LensAnalysis.app -type f -name "*.so" -exec chmod +x {} \;
+          find dist/LensAnalysis.app -type f -perm 644 -exec chmod +x {} \;
+          # 特别确保主可执行文件有执行权限
+          chmod +x dist/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
+          # 移除隔离属性（避免 macOS Gatekeeper 阻止）
+          xattr -d com.apple.quarantine dist/LensAnalysis.app 2>/dev/null || true
+          echo "=== Permissions fixed ==="
+          ls -la dist/LensAnalysis.app/Contents/MacOS/
+
       - name: List build output
         run: |
           echo "=== dist directory ==="
