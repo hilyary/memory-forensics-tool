@@ -7,37 +7,37 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: Install Nuitka
-        run: pip install nuitka
-
-      - name: Install dependencies
-        run: |
-          pip install pywebview python-docx pefile pyyaml rich
-
-      - name: Build with Nuitka
-        run: |
-          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend/scripts=backend/scripts --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
-
-      - name: List build output
-        run: |
-          echo "=== dist directory ==="
-          dir dist\ || echo "dist directory not found"
-
-      - name: Upload Windows app
-        uses: actions/upload-artifact@v4
-        with:
-          name: LensAnalysis-Windows
-          path: dist/LensAnalysis*
+  # build-windows:
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.9'
+  #
+  #     - name: Install Nuitka
+  #       run: pip install nuitka
+  #
+  #     - name: Install dependencies
+  #       run: |
+  #         pip install pywebview python-docx pefile pyyaml rich
+  #
+  #     - name: Build with Nuitka
+  #       run: |
+  #         python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend/scripts=backend/scripts --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+  #
+  #     - name: List build output
+  #       run: |
+  #         echo "=== dist directory ==="
+  #         dir dist\ || echo "dist directory not found"
+  #
+  #     - name: Upload Windows app
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: LensAnalysis-Windows
+  #         path: dist/LensAnalysis*
 
   build-macos:
     runs-on: macos-latest
