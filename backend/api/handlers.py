@@ -4758,16 +4758,55 @@ def download_symbols(image_path, symbols_dir):
         temp_pdb_path = temp_dir / f"temp_pdb_{os.getpid()}_{uuid.uuid4().hex[:8]}.pdb"
 
         try:
-            # 下载 PDB 文件
+            # 下载 PDB 文件（支持代理和进度显示）
             pdb_url = f"https://msdl.microsoft.com/download/symbols/{pdb_name}/{guid}{age:01X}/{pdb_name}"
             print(f"正在下载 PDB 文件...")
             print(f"  URL: {pdb_url}")
 
-            import urllib.request as req2
-            req2.urlretrieve(pdb_url, str(temp_pdb_path))
+            # 使用 requests 库（支持代理和进度条）
+            try:
+                import requests
+            except ImportError:
+                print("警告: requests 库未安装，使用 urllib（无进度显示）")
+                import urllib.request as req2
+                req2.urlretrieve(pdb_url, str(temp_pdb_path))
+            else:
+                # 检测系统代理
+                proxies = None
+                try:
+                    # macOS/Linux 代理检测
+                    import os
+                    http_proxy = os.environ.get('http_proxy') or os.environ.get('HTTP_PROXY')
+                    https_proxy = os.environ.get('https_proxy') or os.environ.get('HTTPS_PROXY')
+                    if http_proxy or https_proxy:
+                        proxies = {}
+                        if http_proxy:
+                            proxies['http'] = http_proxy
+                        if https_proxy:
+                            proxies['https'] = https_proxy
+                        print(f"检测到代理: {proxies}")
+                except:
+                    pass
 
-            pdb_size = temp_pdb_path.stat().st_size
-            print(f"PDB 下载完成: {pdb_size} bytes")
+                # 下载并显示进度
+                response = requests.get(pdb_url, proxies=proxies, stream=True, timeout=60)
+                total_size = int(response.headers.get('content-length', 0))
+                downloaded = 0
+                chunk_size = 8192
+                last_percent = -1
+
+                with open(temp_pdb_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total_size > 0:
+                                percent = int(downloaded * 100 / total_size)
+                                if percent % 10 == 0 and percent != last_percent:
+                                    print(f"  下载进度: {percent}% ({downloaded}/{total_size} bytes)")
+                                    last_percent = percent
+
+                print(f"PDB 下载完成: {downloaded} bytes")
 
             # 转换 PDB 为 ISF 格式
             print("正在转换 PDB 为 ISF 格式...")
