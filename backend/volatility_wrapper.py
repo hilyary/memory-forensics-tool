@@ -28,9 +28,6 @@ class VolatilityWrapper:
         # 获取项目根目录（兼容 Nuitka/PyInstaller 打包）
         self._project_root = self._get_project_root()
 
-        # 自定义插件目录 - 用于加载我们编写的插件
-        self._custom_plugin_dir = str(self._project_root / 'backend' / 'plugins')
-
         # 符号表目录 - 独立的用户数据目录，打包后也能正常工作
         self._symbols_dir = self._get_symbols_dir()
 
@@ -38,7 +35,6 @@ class VolatilityWrapper:
         self._vol_path = self._find_vol_command()
 
         logger.info(f"项目根目录: {self._project_root}")
-        logger.info(f"自定义插件目录: {self._custom_plugin_dir}")
 
     @staticmethod
     def _get_project_root() -> Path:
@@ -203,15 +199,6 @@ class VolatilityWrapper:
                     vol_path,
                     '-f', self.image_path,
                 ]
-
-            # 添加自定义插件目录到 PYTHONPATH（使用 os.pathsep 跨平台分隔符）
-            if use_custom_plugins and os.path.exists(self._custom_plugin_dir):
-                existing_path = env.get('PYTHONPATH', '')
-                # os.pathsep 在 Windows 上是 ';'，在 Unix 上是 ':'
-                if existing_path:
-                    env['PYTHONPATH'] = f"{self._custom_plugin_dir}{os.pathsep}{existing_path}"
-                else:
-                    env['PYTHONPATH'] = self._custom_plugin_dir
 
             # 符号表处理策略（优先使用官方自动下载）
             # Volatility 3.27.0 支持自动从微软官方下载 Windows 符号表
