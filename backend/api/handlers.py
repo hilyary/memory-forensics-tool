@@ -1287,8 +1287,14 @@ class APIHandler:
             try:
                 if proxy_url:
                     # 使用代理下载
+                    # 创建 SSL 上下文以避免证书验证失败（代理可能中断 SSL 连接）
+                    import ssl
+                    ssl_context = ssl.create_default_context()
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
+
                     proxy_handler = urllib.request.ProxyHandler({'https': proxy_url, 'http': proxy_url})
-                    opener = urllib.request.build_opener(proxy_handler)
+                    opener = urllib.request.build_opener(proxy_handler, urllib.request.HTTPSHandler(context=ssl_context))
 
                     # 创建请求并添加 User-Agent
                     file_req = urllib.request.Request(download_url)
