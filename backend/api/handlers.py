@@ -2288,10 +2288,21 @@ class APIHandler:
         """获取镜像的 banner 信息（优先使用缓存）"""
         logger.info(f"_get_image_banner 被调用: file_path={file_path}, os_type={os_type}")
 
-        # 优先使用缓存的 banner
+        # 验证缓存是否有效（不能是表头或无效值）
         if self._cached_banner:
-            logger.info(f"使用缓存的 banner: {self._cached_banner[:100]}...")
-            return self._cached_banner
+            # 检查缓存是否有效
+            is_valid = (
+                self._cached_banner and
+                self._cached_banner not in ['Banner', 'banner', '有'] and
+                len(self._cached_banner) > 20 and  # 正常 banner 应该更长
+                ('Linux' in self._cached_banner or 'Darwin' in self._cached_banner or 'Windows' in self._cached_banner)
+            )
+            if is_valid:
+                logger.info(f"使用缓存的 banner: {self._cached_banner[:100]}...")
+                return self._cached_banner
+            else:
+                logger.warning(f"缓存的 banner 无效，重新获取: {self._cached_banner}")
+                self._cached_banner = None  # 清除无效缓存
 
         # 如果没有缓存，调用 banners 插件获取
         try:
