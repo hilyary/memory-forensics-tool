@@ -4674,11 +4674,34 @@ class APIHandler:
             import sys
             import platform
 
-            # 获取脚本路径
-            script_path = Path(__file__).parent.parent / 'scripts' / 'download_windows_symbols.py'
+            # 获取脚本路径 - 使用相对于可执行文件的路径
+            # 打包后 __file__ 不准确，需要用 sys.executable
+            script_path = None
+
+            if getattr(sys, 'frozen', False):
+                # 打包后的环境
+                exe_path = Path(sys.executable)
+                logger.info(f"可执行文件路径: {exe_path}")
+
+                # 尝试多个可能的脚本位置
+                possible_paths = [
+                    exe_path.parent / 'backend' / 'scripts' / 'download_windows_symbols.py',
+                    exe_path.parent.parent / 'Resources' / 'backend' / 'scripts' / 'download_windows_symbols.py',
+                    exe_path.parent / 'scripts' / 'download_windows_symbols.py',
+                ]
+
+                for path in possible_paths:
+                    if path.exists():
+                        script_path = path
+                        break
+            else:
+                # 开发环境
+                script_path = Path(__file__).parent.parent / 'scripts' / 'download_windows_symbols.py'
+
+            logger.info(f"脚本路径: {script_path}")
 
             # 检查脚本是否存在
-            if not script_path.exists():
+            if not script_path or not script_path.exists():
                 self._hide_loading()
                 logger.error(f"下载脚本不存在: {script_path}")
                 return {
