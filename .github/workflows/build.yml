@@ -63,9 +63,9 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --plugin-disable=pywebview \
-            --include-module=webview \
             --include-module=webview.platforms.cocoa \
+            --include-module=pyobjc \
+            --include-module=PyObjCTools \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
