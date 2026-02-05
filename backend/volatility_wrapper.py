@@ -464,7 +464,7 @@ class VolatilityWrapper:
         for line in lines:
             if not line.strip() or line.startswith('Progress'):
                 continue
-            is_header = self._is_header_row(line)
+            is_header = self._is_header_row(line, plugin_name)
             # 跳过表头行（检查是否包含连续的表头关键词）
             if is_header:
                 continue
@@ -514,7 +514,7 @@ class VolatilityWrapper:
 
         return results
 
-    def _is_header_row(self, line: str) -> bool:
+    def _is_header_row(self, line: str, plugin_name: str = '') -> bool:
         """判断是否是表头行"""
         # 空行或进度行不是表头
         if not line.strip():
