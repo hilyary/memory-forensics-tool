@@ -534,6 +534,12 @@ class VolatilityWrapper:
         if 'Volatility 3' in line:
             return True
 
+        # 【重要】提前检查注册表相关表头（在 parts 分割之前）
+        # 这样可以避免因为空格分割导致检查失败
+        if 'Last Write Time' in line or 'Hive Offset' in line or 'Key Name' in line:
+            logger.warning(f"[表头检测] 识别为注册表表头行，将跳过: {line[:80]}")
+            return True
+
         # 优先用制表符分隔，如果没有制表符则用空格分隔
         if '\t' in line:
             parts = line.split('\t')
@@ -598,11 +604,6 @@ class VolatilityWrapper:
 
         # 调试：显示未识别为表头的行
         logger.debug(f"未识别表头行: parts={len(parts)}, header_as_columns={header_as_columns}, parts[:3]={parts[:3] if len(parts) >= 3 else parts}")
-
-        # 特殊处理：注册表相关表头（多词表头）
-        if 'Last Write Time' in line or 'Hive Offset' in line or 'Key Name' in line:
-            logger.warning(f"[表头检测] 识别为注册表表头行，将跳过: {line[:80]}")
-            return True
 
         # printkey 插件的特定表头关键词组合
         if 'printkey' in plugin_name:
