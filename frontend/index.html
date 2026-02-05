@@ -4736,7 +4736,13 @@
 
                 async loadSymbolStatus() {
                     const statusList = document.getElementById('symbolStatusList');
-                    if (!statusList) return;
+                    if (!statusList) {
+                        // 如果对话框未打开，先打开对话框
+                        this.openSymbolManager();
+                        // 等待 DOM 渲染完成
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        return this.loadSymbolStatus(); // 递归调用重新加载
+                    }
 
                     if (!this.isWebView) {
                         statusList.innerHTML = `
