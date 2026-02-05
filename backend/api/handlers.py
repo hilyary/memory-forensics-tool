@@ -4668,6 +4668,7 @@ class APIHandler:
             # 使用独立脚本下载符号表
             import subprocess
             import sys
+            import platform
 
             # 获取脚本路径
             script_path = Path(__file__).parent.parent / 'scripts' / 'download_windows_symbols.py'
