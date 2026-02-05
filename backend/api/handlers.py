@@ -4663,19 +4663,64 @@ class APIHandler:
 
             logger.info("开始下载Windows符号表...")
             logger.info("使用自定义 PDB 扫描和下载方案（支持代理）...")
-            self._show_loading('正在下载Windows符号表...', '正在从微软官方符号服务器下载...\n\n支持代理，可能需要几分钟，请耐心等待。')
+            self._show_loading('正在扫描PDB信息...', '正在从内存镜像获取PDB GUID...\n\n请稍候...')
 
             # 导入Volatility3的PDB工具
             try:
                 from volatility3.framework.symbols.windows import pdbutil, pdbutil
                 from volatility3.framework import contexts
-            except ImportError as e:
-                self._hide_loading()
-                logger.error(f"导入Volatility3 PDB工具失败: {e}")
-                return {
-                    'status': 'error',
-                    'message': f'缺少必要的依赖: {str(e)}'
-                }
+                use_volatility_module = True
+            except ImportError:
+                logger.info("Volatility3 模块不可用，使用 vol 命令获取 PDB 信息")
+                use_volatility_module = False
+
+            # 如果无法导入 volatility3 模块，使用 vol 命令获取 PDB 信息
+            if not use_volatility_module:
+                import subprocess
+                import re
+
+                file_path = self.current_image['path']
+
+                try:
+                    # 使用 vol 命令扫描 PDB（如果 pdbscan 可用）
+                    cmd = ['vol', '-f', file_path, 'windows.info.Info']
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+
+                    # 尝试从输出中提取内核版本信息
+                    output = result.stderr or result.stdout
+
+                    # 由于 pdbscan 可能不可用，我们直接提供手动下载指引
+                    self._hide_loading()
+
+                    manual_instructions = '''无法自动下载符号表，请按以下步骤操作：
+
+方法1 - 使用 vol 命令（推荐）：
+1. 打开终端，运行以下命令获取 PDB 信息：
+   vol -f {file} windows.info.Info
+
+2. 记下内核版本信息
+
+3. 从微软符号服务器下载对应符号表，或运行：
+   vol -f {file} windows.symbolstable.SymbolTable
+
+方法2 - 手动下载：
+1. 访问 Volatility 3 符号表仓库下载对应版本
+
+注意：首次使用会自动下载符号表到用户目录。'''.format(file=file_path)
+
+                    return {
+                        'status': 'error',
+                        'message': manual_instructions
+                    }
+
+                except Exception as e:
+                    self._hide_loading()
+                    logger.error(f"执行 vol 命令失败: {e}")
+                    return {
+                        'status': 'error',
+                        'message': f'获取 PDB 信息失败: {str(e)}\n\n'
+                                  '请确保已安装 Volatility 3: pip install volatility3'
+                    }
 
             try:
                 # 直接使用Volatility3框架扫描PDB签名
