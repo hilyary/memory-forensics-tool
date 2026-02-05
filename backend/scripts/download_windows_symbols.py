@@ -115,25 +115,23 @@ def download_symbols(image_path: str, symbols_dir: str = None):
             except:
                 pass
 
-            # 进度回调函数
+            # 进度回调函数（避免重复打印）
+            last_shown = [0]  # 用列表跟踪上次显示的百分比
             def show_progress(block_num, block_size, total_size):
                 downloaded = block_num * block_size
                 if total_size > 0:
                     percent = min(int(downloaded * 100 / total_size), 100)
-                    # 每下载 25% 显示一次进度
-                    if percent % 25 == 0 and percent > 0:
+                    # 每下载 25% 显示一次进度，避免重复
+                    if percent % 25 == 0 and percent > 0 and percent != last_shown[0]:
                         filled = percent // 5
                         bar = '=' * filled + ' ' * (20 - filled)
                         print(f"  下载进度: [{bar}] {percent}%")
-                if downloaded >= total_size and total_size > 0:
-                    pass  # 下载完成
+                        last_shown[0] = percent
 
             req2.urlretrieve(pdb_url, str(temp_pdb_path), reporthook=show_progress)
             pdb_size = temp_pdb_path.stat().st_size
-            print(f"PDB 下载完成: {pdb_size} bytes")
 
             # 转换 PDB 为 ISF 格式
-            print("正在转换 PDB 为 ISF 格式...")
             temp_pdb_url = temp_pdb_path.as_uri()
 
             # 创建context并加载PDB文件
