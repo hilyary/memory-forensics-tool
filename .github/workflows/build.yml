@@ -22,11 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich volatility3
+          pip install pywebview python-docx pefile pyyaml rich
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=volatility3 --include-package=volatility3.plugins --include-package=volatility3.framework --include-package=volatility3.cli --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
 
       - name: List build output
         run: |
@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich volatility3
+          pip install pywebview python-docx pefile pyyaml rich
 
       - name: Build with Nuitka
         run: |
@@ -63,13 +63,10 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --include-package=volatility3 \
-            --include-package=volatility3.plugins \
-            --include-package=volatility3.framework \
-            --include-package=volatility3.cli \
             --plugin-disable=pywebview \
             --include-module=webview \
             --include-module=webview.platforms.cocoa \
+            --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
             --nofollow-import-to=pandas \
