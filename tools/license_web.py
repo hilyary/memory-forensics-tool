@@ -27,10 +27,21 @@ from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 from functools import wraps
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# 添加项目根目录到路径（支持本地和服务器环境）
+import pathlib
+current_dir = pathlib.Path(__file__).parent
+if (current_dir.parent / 'backend').exists():
+    # 本地开发环境
+    sys.path.insert(0, str(current_dir.parent))
+else:
+    # 服务器环境：/opt/lensanalysis
+    sys.path.insert(0, '/opt/lensanalysis')
 
-from backend.license_manager import OfflineLicenseManager
+# 尝试导入，支持不同环境
+try:
+    from backend.license_manager import OfflineLicenseManager
+except ImportError:
+    from license_manager import OfflineLicenseManager
 
 # 配置日志
 logging.basicConfig(
