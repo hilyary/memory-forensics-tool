@@ -80,18 +80,7 @@ jobs:
             LensAnalysis.py
 
       - name: Fix Info.plist for proper GUI app
-        run: |
-          python3 -c "
-import plistlib
-plist_path = 'dist/LensAnalysis.app/Contents/Info.plist'
-with open(plist_path, 'rb') as f:
-    plist = plistlib.load(f)
-plist['NSPrincipalClass'] = 'NSApplication'
-plist['LSBackgroundOnly'] = False
-with open(plist_path, 'wb') as f:
-    plistlib.dump(plist, f)
-print('Info.plist fixed')
-"
+        run: python3 -c "import plistlib; p = plistlib.load(open('dist/LensAnalysis.app/Contents/Info.plist', 'rb')); p['NSPrincipalClass'] = 'NSApplication'; p['LSBackgroundOnly'] = False; plistlib.dump(p, open('dist/LensAnalysis.app/Contents/Info.plist', 'wb')); print('Info.plist fixed')"
 
       - name: Re-sign after Info.plist modification
         run: |
