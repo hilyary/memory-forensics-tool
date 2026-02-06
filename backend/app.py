@@ -81,7 +81,30 @@ class LensAnalysisApp:
 
         # 使用 HTTP 服务器模式（pywebview 需要 HTTP 才能注入 JS API）
         # 这不是 Web 后端，只是本地桥接机制
-        frontend_path = str(Path(__file__).parent.parent / 'frontend' / 'index.html')
+
+        # 获取前端文件路径（支持打包后的应用）
+        # PyInstaller/Nuitka 打包后，__file__ 指向编译后的模块
+        # 我们需要相对于可执行文件的位置来查找 frontend
+        if getattr(sys, 'frozen', False):
+            # 打包后的应用
+            if platform.system() == 'Darwin':
+                # macOS .app bundle: 可执行文件在 Contents/MacOS/
+                # frontend 也在 Contents/MacOS/
+                executable_dir = Path(sys.executable).parent
+                frontend_path = str(executable_dir / 'frontend' / 'index.html')
+            else:
+                # Windows/Linux: standalone 模式
+                executable_dir = Path(sys.executable).parent
+                frontend_path = str(executable_dir / 'frontend' / 'index.html')
+        else:
+            # 开发环境
+            frontend_path = str(Path(__file__).parent.parent / 'frontend' / 'index.html')
+
+        logger.info(f"前端路径: {frontend_path}")
+
+        if not Path(frontend_path).exists():
+            logger.error(f"前端文件不存在: {frontend_path}")
+            raise FileNotFoundError(f"找不到前端文件: {frontend_path}")
 
         # 构建窗口参数
         window_args = {
