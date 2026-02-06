@@ -7,37 +7,37 @@ on:
   workflow_dispatch:
 
 jobs:
-  # build-windows:
-  #   runs-on: windows-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.9'
-  #
-  #     - name: Install Nuitka
-  #       run: pip install nuitka
-  #
-  #     - name: Install dependencies
-  #       run: |
-  #         pip install pywebview python-docx pefile pyyaml rich
-  #
-  #     - name: Build with Nuitka
-  #       run: |
-  #         python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-data-dir=backend/scripts=backend/scripts --plugin-disable=pywebview --include-module=webview --include-module=webview.platforms.edgechromium --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
-  #
-  #     - name: List build output
-  #       run: |
-  #         echo "=== dist directory ==="
-  #         dir dist\ || echo "dist directory not found"
-  #
-  #     - name: Upload Windows app
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: LensAnalysis-Windows
-  #         path: dist/LensAnalysis*
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Nuitka
+        run: pip install "nuitka==2.8.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pywebview python-docx pefile pyyaml rich PySocks
+
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=webview.platforms.edgechromium --include-module=socks --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+
+      - name: List build output
+        run: |
+          echo "=== dist directory ==="
+          dir dist\ || echo "dist directory not found"
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: LensAnalysis-Windows
+          path: dist/LensAnalysis*
 
   build-macos:
     runs-on: macos-latest
@@ -50,7 +50,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install Nuitka
-        run: pip install "nuitka==1.9.7"
+        run: pip install "nuitka==2.8.10"
 
       - name: Install dependencies
         run: |
@@ -116,8 +116,8 @@ jobs:
           find dist/LensAnalysis.app -type f -perm 644 -exec chmod +x {} \;
           # 特别确保主可执行文件有执行权限
           chmod +x dist/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
-          # 移除隔离属性（避免 macOS Gatekeeper 阻止）
-          xattr -d com.apple.quarantine dist/LensAnalysis.app 2>/dev/null || true
+          # 移除所有扩展属性（避免 macOS Gatekeeper 阻止）
+          xattr -cr dist/LensAnalysis.app
           # Ad-hoc 代码签名（允许双击打开）
           codesign --force --deep --sign - dist/LensAnalysis.app
           echo "=== Permissions fixed ==="
@@ -131,8 +131,28 @@ jobs:
           echo "=== Looking for LensAnalysis ==="
           find dist -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
 
-      - name: Upload macOS app
+      - name: Create DMG
+        run: |
+          echo "=== Creating DMG ==="
+          # 创建临时目录
+          mkdir -p dmg_temp
+
+          # 复制 app 到临时目录
+          cp -R dist/LensAnalysis.app dmg_temp/
+
+          # 创建 DMG
+          hdiutil create -volname "LensAnalysis" -srcfolder dmg_temp -ov -format UDBZ -fs HFS+ "dist/LensAnalysis-1.0.0-macOS.dmg"
+
+          # 清理临时目录
+          rm -rf dmg_temp
+
+          echo "DMG created:"
+          ls -la dist/*.dmg
+
+      - name: Upload macOS app and DMG
         uses: actions/upload-artifact@v4
         with:
           name: LensAnalysis-macOS
-          path: dist/LensAnalysis*
+          path: |
+            dist/LensAnalysis.app
+            dist/*.dmg
