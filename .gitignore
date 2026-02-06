@@ -60,3 +60,7 @@ test_*.sh
 .env
 *.key
 secrets/
+
+# 敏感部署配置
+SERVER_DEPLOY.md
+.env.server
