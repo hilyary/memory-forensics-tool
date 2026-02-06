@@ -134,17 +134,24 @@ jobs:
       - name: Create DMG
         run: |
           echo "=== Creating DMG ==="
-          # 创建临时目录
-          mkdir -p dmg_temp
+          # 创建临时目录用于 DMG
+          mkdir -p dmg_contents
 
-          # 复制 app 到临时目录
-          cp -R dist/LensAnalysis.app dmg_temp/
+          # 复制 app 到 DMG 目录
+          cp -R dist/LensAnalysis.app dmg_contents/
 
-          # 创建 DMG
-          hdiutil create -volname "LensAnalysis" -srcfolder dmg_temp -ov -format UDBZ -fs HFS+ "dist/LensAnalysis-1.0.0-macOS.dmg"
+          # 创建 Applications 文件夹的符号链接（方便拖拽安装）
+          ln -s /Applications dmg_contents/Applications
 
-          # 清理临时目录
-          rm -rf dmg_temp
+          # 创建 DMG（使用 UDZO 格式，兼容性更好）
+          hdiutil create -volname "LensAnalysis" \
+                         -srcfolder dmg_contents \
+                         -ov -format UDZO \
+                         -imagekey zlib-level=9 \
+                         "dist/LensAnalysis-1.0.0-macOS.dmg"
+
+          # 清理
+          rm -rf dmg_contents
 
           echo "DMG created:"
           ls -la dist/*.dmg
