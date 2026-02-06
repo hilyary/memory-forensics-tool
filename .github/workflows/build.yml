@@ -77,8 +77,32 @@ jobs:
             --macos-app-icon=frontend/assets/LensAnalysis-icon.icns \
             --macos-app-name=LensAnalysis \
             --macos-app-version=1.0.0 \
-            --macos-app-mode=gui \
             LensAnalysis.py
+
+      - name: Fix Info.plist for proper GUI app
+        run: |
+          python3 << 'EOF'
+import plistlib
+
+plist_path = 'dist/LensAnalysis.app/Contents/Info.plist'
+
+with open(plist_path, 'rb') as f:
+    plist = plistlib.load(f)
+
+# 添加必要的键
+plist['NSPrincipalClass'] = 'NSApplication'
+plist['LSBackgroundOnly'] = False
+
+with open(plist_path, 'wb') as f:
+    plistlib.dump(plist, f)
+
+print("Info.plist 已修复")
+EOF
+
+      - name: Re-sign after Info.plist modification
+        run: |
+          codesign --force --deep --sign - dist/LensAnalysis.app
+          echo "重新签名完成"
 
       - name: Copy PyObjC Python files
         run: |
@@ -119,10 +143,31 @@ jobs:
           chmod +x dist/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
           # 移除所有扩展属性（避免 macOS Gatekeeper 阻止）
           xattr -cr dist/LensAnalysis.app
-          # Ad-hoc 代码签名（允许双击打开）
-          codesign --force --deep --sign - dist/LensAnalysis.app
           echo "=== Permissions fixed ==="
           ls -la dist/LensAnalysis.app/Contents/MacOS/
+
+      - name: Install Objective-C launcher
+        run: |
+          echo "=== Installing Objective-C launcher ==="
+
+          # 编译启动器
+          clang -framework Cocoa -o Launcher Launcher.m
+
+          # 重命名 Nuitka 生成的可执行文件
+          mv dist/LensAnalysis.app/Contents/MacOS/LensAnalysis dist/LensAnalysis.app/Contents/MacOS/LensAnalysis.bin
+
+          # 安装启动器
+          cp Launcher dist/LensAnalysis.app/Contents/MacOS/LensAnalysis
+          chmod +x dist/LensAnalysis.app/Contents/MacOS/LensAnalysis
+
+          echo "=== Launcher installed ==="
+          ls -la dist/LensAnalysis.app/Contents/MacOS/LensAnalysis*
+
+      - name: Re-sign after launcher installation
+        run: |
+          echo "=== Re-signing with launcher ==="
+          codesign --force --deep --sign - dist/LensAnalysis.app
+          echo "Re-signing completed"
 
       - name: List build output
         run: |
