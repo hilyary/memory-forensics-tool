@@ -194,6 +194,153 @@
                 transform: translateY(0);
             }
         }
+
+        /* 激活界面样式 */
+        .license-screen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 10000 !important;
+        }
+
+        .license-bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+        }
+
+        .license-content {
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            padding: 48px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .license-logo-wrapper {
+            margin-bottom: 24px;
+        }
+
+        .license-logo-img {
+            height: 40px;
+            width: auto;
+        }
+
+        .license-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 8px 0;
+        }
+
+        .license-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0 0 32px 0;
+        }
+
+        .license-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .license-input-group {
+            position: relative;
+        }
+
+        .license-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        .license-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .license-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .license-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .license-btn.primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .license-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .license-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .license-message {
+            min-height: 24px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .license-message.error {
+            color: #ef4444;
+        }
+
+        .license-message.success {
+            color: #10b981;
+        }
+
+        .license-info {
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .license-info p {
+            margin: 4px 0;
+        }
+
+        .license-contact {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            color: #6366f1;
+            font-weight: 500;
+        }
     </style>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
@@ -227,6 +374,40 @@
                         <div class="loader-progress"></div>
                     </div>
                     <p class="splash-status" id="splashStatus">正在初始化...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 激活界面 -->
+        <div class="license-screen" id="licenseScreen" style="display: none;">
+            <div class="license-bg-pattern"></div>
+            <div class="license-content">
+                <div class="license-logo-wrapper">
+                    <img src="assets/LensAnalysis-horizontal.png" alt="析镜 LensAnalysis" class="license-logo-img">
+                </div>
+                <h2 class="license-title">激活析镜</h2>
+                <p class="license-subtitle">请输入您的激活码以继续使用</p>
+
+                <div class="license-form">
+                    <div class="license-input-group">
+                        <input
+                            type="text"
+                            id="licenseKeyInput"
+                            class="license-input"
+                            placeholder="输入激活码 (格式: LENS-xxx-xxx-xxx)"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <button class="license-btn primary" id="activateBtn">
+                        <span id="activateBtnText">激活</span>
+                    </button>
+                </div>
+
+                <div class="license-message" id="licenseMessage"></div>
+
+                <div class="license-info">
+                    <p>如需获取激活码，请联系：</p>
+                    <p class="license-contact">support@example.com</p>
                 </div>
             </div>
         </div>

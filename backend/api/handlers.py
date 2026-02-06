@@ -516,6 +516,46 @@ class APIHandler:
         """设置窗口引用"""
         self._window = window
 
+    def set_license_manager(self, license_manager):
+        """设置许可证管理器"""
+        self._license_manager = license_manager
+
+    def set_app(self, app):
+        """设置应用引用"""
+        self._app = app
+
+    def activate_license(self, license_key: str) -> Dict[str, Any]:
+        """激活许可证"""
+        if hasattr(self, '_license_manager') and self._license_manager:
+            success, message = self._license_manager.activate_license(license_key)
+            if success:
+                # 激活成功，需要重启应用
+                return {
+                    'status': 'success',
+                    'message': message,
+                    'require_restart': True
+                }
+            return {
+                'status': 'error',
+                'message': message
+            }
+        return {
+            'status': 'error',
+            'message': '许可证管理器未初始化'
+        }
+
+    def get_license_status(self) -> Dict[str, Any]:
+        """获取许可证状态"""
+        if hasattr(self, '_app') and self._app:
+            return {
+                'status': 'success',
+                'data': self._app.get_license_status()
+            }
+        return {
+            'status': 'success',
+            'data': {'valid': False}
+        }
+
     def save_terms_accepted(self) -> Dict[str, Any]:
         """保存用户已同意条款"""
         try:

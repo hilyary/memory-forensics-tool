@@ -11,6 +11,7 @@ from threading import Thread
 import json
 import platform
 from datetime import datetime
+from typing import Dict, Tuple
 
 # 导入 webview（不在导入前设置后端，避免 Nuitka 冲突）
 import webview
@@ -19,6 +20,7 @@ import webview
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.api.handlers import APIHandler
+from backend.license_manager import LicenseManager
 
 
 def get_user_data_dir() -> Path:
@@ -60,6 +62,9 @@ class LensAnalysisApp:
     def __init__(self):
         self.window = None
         self.api_handler = APIHandler()
+        self.license_manager = LicenseManager()
+        self.license_valid = False
+        self.license_info = None
 
         # Ensure directories exist (已在 APIHandler 中处理)
         # 不再需要手动创建 cache 和 logs 目录
@@ -67,6 +72,13 @@ class LensAnalysisApp:
     def start(self):
         """启动应用"""
         logger.info("启动析镜 LensAnalysis...")
+
+        # 检查许可证
+        self._check_license()
+
+        # 将许可证管理器传递给 APIHandler
+        self.api_handler.set_license_manager(self.license_manager)
+        self.api_handler.set_app(self)
 
         # 使用 HTTP 服务器模式（pywebview 需要 HTTP 才能注入 JS API）
         # 这不是 Web 后端，只是本地桥接机制
@@ -123,6 +135,14 @@ class LensAnalysisApp:
             if icon_path:
                 window_args['icon'] = str(icon_path)
 
+        # 如果未激活，修改标题和大小显示激活界面
+        if not self.license_valid:
+            window_args['title'] = '析镜 - 激活'
+            window_args['width'] = 500
+            window_args['height'] = 400
+            window_args['resizable'] = False
+            window_args['min_size'] = (500, 400)
+
         self.window = webview.create_window(**window_args)
 
         # 将窗口引用传递给 APIHandler，用于退出功能
@@ -130,6 +150,34 @@ class LensAnalysisApp:
 
         # 必须使用 http_server=True 才能让 JS API 工作
         webview.start(debug=False, http_server=True)
+
+    def _check_license(self):
+        """检查许可证状态"""
+        is_valid, message, license_info = self.license_manager.check_license()
+        self.license_valid = is_valid
+        self.license_info = license_info
+
+        if is_valid:
+            logger.info(f"许可证有效: {license_info.get('user', 'Unknown')}")
+        else:
+            logger.warning(f"许可证无效: {message}")
+
+    def activate_license(self, license_key: str) -> Tuple[bool, str]:
+        """激活许可证"""
+        return self.license_manager.activate_license(license_key)
+
+    def get_license_status(self) -> Dict:
+        """获取许可证状态"""
+        if self.license_valid and self.license_info:
+            return {
+                'valid': True,
+                'user': self.license_info.get('user', ''),
+                'activated_at': self.license_info.get('activated_at', 0),
+                'expiry': self.license_info.get('expiry', 0)
+            }
+        return {
+            'valid': False
+        }
 
     def _get_app_icon(self) -> Path:
         """获取应用图标文件路径（跨平台）

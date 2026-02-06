@@ -32,9 +32,9 @@ class ForensicsApp {
             await window.pywebview.ready;
             this.log('pywebview 已就绪');
 
-            // 获取系统信息
-            await this.loadSystemInfo();
-            await this.loadAvailablePlugins();
+            // 检查许可证状态
+            await this.checkLicenseStatus();
+
         } catch (error) {
             this.log('pywebview 初始化失败: ' + error.message, 'error');
             this.setSystemStatus('初始化失败', 'error');
@@ -76,6 +76,12 @@ class ForensicsApp {
         // 搜索结果
         const searchInResults = document.getElementById('searchInResults');
         if (searchInResults) searchInResults.addEventListener('click', () => this.searchInResults());
+
+        // 激活按钮
+        const activateBtn = document.getElementById('activateBtn');
+        if (activateBtn) {
+            activateBtn.addEventListener('click', () => this.activateLicense());
+        }
     }
 
     /**
@@ -766,6 +772,135 @@ class ForensicsApp {
             data: mockData[pluginId] || { plugin: pluginId, results: [] },
             cached: false
         };
+    }
+
+    /**
+     * 检查许可证状态
+     */
+    async checkLicenseStatus() {
+        if (!this.api) return;
+
+        try {
+            const result = await this.api.get_license_status();
+
+            if (result.status === 'success' && result.data && result.data.valid) {
+                // 许可证有效，隐藏激活界面，显示主界面
+                this.log('许可证有效');
+                this.hideLicenseScreen();
+                // 继续正常初始化
+                await this.loadSystemInfo();
+                await this.loadAvailablePlugins();
+            } else {
+                // 许可证无效，显示激活界面
+                this.log('许可证未激活或已过期');
+                this.showLicenseScreen();
+            }
+        } catch (error) {
+            this.log('检查许可证失败: ' + error.message, 'error');
+            // 错误时也显示激活界面
+            this.showLicenseScreen();
+        }
+    }
+
+    /**
+     * 激活许可证
+     */
+    async activateLicense() {
+        if (!this.api) return;
+
+        const input = document.getElementById('licenseKeyInput');
+        const messageDiv = document.getElementById('licenseMessage');
+        const btn = document.getElementById('activateBtn');
+        const btnText = document.getElementById('activateBtnText');
+
+        const licenseKey = input ? input.value.trim() : '';
+
+        if (!licenseKey) {
+            this.showLicenseMessage('请输入激活码', 'error');
+            return;
+        }
+
+        // 禁用按钮
+        btn.disabled = true;
+        btnText.textContent = '激活中...';
+
+        try {
+            const result = await this.api.activate_license(licenseKey);
+
+            if (result.status === 'success') {
+                this.showLicenseMessage(result.message, 'success');
+
+                // 激活成功，等待1秒后提示重启
+                setTimeout(() => {
+                    if (result.require_restart) {
+                        this.showToast('success', '激活成功', '请重启应用以完成激活');
+                        setTimeout(() => {
+                            this.api.exit();
+                        }, 2000);
+                    }
+                }, 1000);
+            } else {
+                this.showLicenseMessage(result.message || '激活失败', 'error');
+            }
+        } catch (error) {
+            this.showLicenseMessage('激活失败: ' + error.message, 'error');
+        } finally {
+            // 恢复按钮
+            btn.disabled = false;
+            btnText.textContent = '激活';
+        }
+    }
+
+    /**
+     * 显示激活界面
+     */
+    showLicenseScreen() {
+        const licenseScreen = document.getElementById('licenseScreen');
+        const splashScreen = document.getElementById('splashScreen');
+        const mainContent = document.querySelector('.main-container');
+        const header = document.querySelector('.header');
+
+        // 隐藏启动画面和主界面
+        if (splashScreen) splashScreen.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'none';
+        if (header) header.style.display = 'none';
+
+        // 显示激活界面
+        if (licenseScreen) licenseScreen.style.display = 'flex';
+    }
+
+    /**
+     * 隐藏激活界面
+     */
+    hideLicenseScreen() {
+        const licenseScreen = document.getElementById('licenseScreen');
+        const splashScreen = document.getElementById('splashScreen');
+
+        // 隐藏激活界面
+        if (licenseScreen) licenseScreen.style.display = 'none';
+
+        // 显示主界面
+        const mainContent = document.querySelector('.main-container');
+        const header = document.querySelector('.header');
+        if (mainContent) mainContent.style.display = 'flex';
+        if (header) header.style.display = 'flex';
+
+        // 隐藏启动画面
+        if (splashScreen) {
+            splashScreen.classList.add('hidden');
+            setTimeout(() => splashScreen.style.display = 'none', 300);
+        }
+    }
+
+    /**
+     * 显示许可证消息
+     */
+    showLicenseMessage(message, type = '') {
+        const messageDiv = document.getElementById('licenseMessage');
+        if (messageDiv) {
+            messageDiv.textContent = message;
+            messageDiv.className = 'license-message ' + type;
+        }
     }
 }
 
