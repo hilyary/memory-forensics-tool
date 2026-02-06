@@ -129,29 +129,6 @@ jobs:
           echo "=== Permissions fixed ==="
           ls -la dist/LensAnalysis.app/Contents/MacOS/
 
-      - name: Install Objective-C launcher
-        run: |
-          echo "=== Installing Objective-C launcher ==="
-
-          # 编译启动器
-          clang -framework Cocoa -o Launcher Launcher.m
-
-          # 重命名 Nuitka 生成的可执行文件
-          mv dist/LensAnalysis.app/Contents/MacOS/LensAnalysis dist/LensAnalysis.app/Contents/MacOS/LensAnalysis.bin
-
-          # 安装启动器
-          cp Launcher dist/LensAnalysis.app/Contents/MacOS/LensAnalysis
-          chmod +x dist/LensAnalysis.app/Contents/MacOS/LensAnalysis
-
-          echo "=== Launcher installed ==="
-          ls -la dist/LensAnalysis.app/Contents/MacOS/LensAnalysis*
-
-      - name: Re-sign after launcher installation
-        run: |
-          echo "=== Re-signing with launcher ==="
-          codesign --force --deep --sign - dist/LensAnalysis.app
-          echo "Re-signing completed"
-
       - name: List build output
         run: |
           echo "=== dist directory ==="

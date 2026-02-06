@@ -1,0 +1,84 @@
+name: Build with PyInstaller (All Platforms)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Install dependencies
+        run: |
+          pip install pywebview python-docx pefile pyyaml rich PySocks
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --name LensAnalysis \
+            --add-data "frontend;frontend" \
+            --hidden-import=webview.platforms.edgechromium \
+            --hidden-import=socks \
+            --hidden-import=PyObjCTools \
+            LensAnalysis.py
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: LensAnalysis-Windows
+          path: dist/LensAnalysis.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Install dependencies
+        run: |
+          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --windowed --name LensAnalysis \
+            --add-data "frontend:frontend" \
+            --hidden-import=webview.platforms.cocoa \
+            --hidden-import=socks \
+            --hidden-import=PyObjCTools \
+            --icon=frontend/assets/LensAnalysis-icon.icns \
+            LensAnalysis.py
+
+      - name: Create DMG
+        run: |
+          mkdir -p dmg_contents
+          cp -R dist/LensAnalysis.app dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+          hdiutil create -volname "LensAnalysis" -srcfolder dmg_contents -ov -format UDZO -imagekey zlib-level=9 "dist/LensAnalysis-1.0.0-macOS.dmg"
+          rm -rf dmg_contents
+          ls -la dist/*.dmg
+
+      - name: Upload macOS app and DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: LensAnalysis-macOS
+          path: |
+            dist/LensAnalysis.app
+            dist/*.dmg
