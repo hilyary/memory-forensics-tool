@@ -2547,13 +2547,8 @@
                         updateDebug('模式: 完整模式');
                         updateDebug('API: ' + (this.api ? '可用' : '不可用'));
 
-                        // 检测 Volatility 3 是否已安装
-                        const vol3Installed = await this.checkVolatility3();
-                        if (vol3Installed) {
-                            this.setSystemStatus('Volatility 3 就绪', 'active');
-                        } else {
-                            this.setSystemStatus('等待 Volatility 3', 'warning');
-                        }
+                        // 检测 Volatility 3 是否已安装（会自动设置状态）
+                        await this.checkVolatility3();
                     });
 
                     // 备用检测
@@ -2563,13 +2558,8 @@
                             this.isWebView = true;
                             this.api = window.pywebview.api;
 
-                            // 检测 Volatility 3
-                            const vol3Installed = await this.checkVolatility3();
-                            if (vol3Installed) {
-                                this.setSystemStatus('Volatility 3 就绪', 'active');
-                            } else {
-                                this.setSystemStatus('等待 Volatility 3', 'warning');
-                            }
+                            // 检测 Volatility 3（会自动设置状态）
+                            await this.checkVolatility3();
                             updateDebug('模式: 完整模式');
                         } else if (!this.isWebView) {
                             updateDebug('⚠️ 使用演示模式');
@@ -8152,7 +8142,7 @@
 
                 // ==================== Volatility 3 检测和安装 ====================
 
-                async checkVolatility3() {
+                async checkVolatility3(showDialog = true) {
                     if (!this.api) return true; // 演示模式，不需要检测
 
                     try {
@@ -8162,16 +8152,23 @@
                         this.updateVol3VersionDisplay(result.data);
 
                         if (result.status === 'success' && result.data.installed) {
+                            this.setSystemStatus('Volatility 3 就绪', 'active');
                             return true;
                         } else {
-                            // 显示安装提示对话框，传入检测结果
-                            this.showVolatility3InstallDialog(result.data || {});
+                            this.setSystemStatus('等待 Volatility 3', 'warning');
+                            // 根据参数决定是否显示安装提示对话框
+                            if (showDialog) {
+                                this.showVolatility3InstallDialog(result.data || {});
+                            }
                             return false;
                         }
                     } catch (error) {
                         console.error('检测 Volatility 3 失败:', error);
-                        // 检测失败时也显示安装提示
-                        this.showVolatility3InstallDialog({});
+                        this.setSystemStatus('等待 Volatility 3', 'warning');
+                        // 检测失败时也显示安装提示（如果允许）
+                        if (showDialog) {
+                            this.showVolatility3InstallDialog({});
+                        }
                         return false;
                     }
                 }
@@ -8257,13 +8254,15 @@
 
                             // 显示成功提示
                             this.showToast('success', '安装成功', result.message);
-                            this.setSystemStatus('Volatility 3 就绪', 'active');
 
                             // 更新侧边栏版本显示
                             this.updateVol3VersionDisplay({
                                 installed: true,
                                 version: result.version
                             });
+
+                            // 重新检测 Volatility 3 状态并更新系统状态（不显示对话框）
+                            await this.checkVolatility3(false);
                         } else {
                             // 安装失败
                             if (btn) {
