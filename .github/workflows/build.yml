@@ -81,16 +81,16 @@ jobs:
 
       - name: Fix Info.plist for proper GUI app
         run: |
-          python3 -c "
-import plistlib
-p = plistlib.load(open('dist/LensAnalysis.app/Contents/Info.plist', 'rb'))
-p['NSPrincipalClass'] = 'NSApplication'
-p['LSBackgroundOnly'] = False
-p['LSUIElement'] = False
-p['NSHighResolutionCapable'] = True
-plistlib.dump(p, open('dist/LensAnalysis.app/Contents/Info.plist', 'wb'))
-print('Info.plist fixed')
-"
+          python3 << 'PYTHON'
+          import plistlib
+          p = plistlib.load(open('dist/LensAnalysis.app/Contents/Info.plist', 'rb'))
+          p['NSPrincipalClass'] = 'NSApplication'
+          p['LSBackgroundOnly'] = False
+          p['LSUIElement'] = False
+          p['NSHighResolutionCapable'] = True
+          plistlib.dump(p, open('dist/LensAnalysis.app/Contents/Info.plist', 'wb'))
+          print('Info.plist fixed')
+          PYTHON
 
       - name: Re-sign after Info.plist modification
         run: |
