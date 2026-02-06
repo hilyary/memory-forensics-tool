@@ -5191,6 +5191,15 @@ if __name__ == '__main__':
 
             installed = vol_works or can_import
 
+            # 获取版本号
+            version = None
+            if can_import:
+                try:
+                    import volatility3
+                    version = getattr(volatility3, '__version__', None)
+                except Exception:
+                    pass
+
             return {
                 'status': 'success',
                 'data': {
@@ -5200,6 +5209,7 @@ if __name__ == '__main__':
                     'can_import': can_import,
                     'vol_works': vol_works,
                     'vol_path': vol_path,
+                    'version': version,
                     'install_command': self._get_install_command(system)
                 }
             }
@@ -5276,15 +5286,35 @@ if __name__ == '__main__':
                     self._hide_loading()
                     logger.info("Volatility 3 安装成功")
 
+                    # 获取安装的版本号
+                    version = None
+                    try:
+                        import importlib
+                        volatility3_spec = importlib.util.find_spec('volatility3')
+                        if volatility3_spec and volatility3_spec.origin:
+                            # 尝试读取版本
+                            result2 = subprocess.run(
+                                [sys.executable, '-c', 'import volatility3; print(volatility3.__version__)'],
+                                capture_output=True,
+                                text=True,
+                                timeout=5
+                            )
+                            if result2.returncode == 0:
+                                version = result2.stdout.strip()
+                    except Exception as e:
+                        logger.warning(f"无法获取 volatility3 版本: {e}")
+
                     # 检查是否需要更新 PATH
+                    version_info = f' (版本 {version})' if version else ''
                     if system in ['Darwin', 'Linux']:
-                        message = 'Volatility 3 安装成功！\n\n使用清华镜像加速下载。\n\n如果 vol 命令不可用，请将以下路径添加到 PATH:\n~/Library/Python/3.9/bin (macOS)\n~/.local/bin (Linux)'
+                        message = f'Volatility 3 安装成功{version_info}！\n\n使用清华镜像加速下载。\n\n如果 vol 命令不可用，请将以下路径添加到 PATH:\n~/Library/Python/3.9/bin (macOS)\n~/.local/bin (Linux)'
                     else:
-                        message = 'Volatility 3 安装成功！\n\n使用清华镜像加速下载。\n\n现在可以使用内存分析功能了。'
+                        message = f'Volatility 3 安装成功{version_info}！\n\n使用清华镜像加速下载。\n\n现在可以使用内存分析功能了。'
 
                     return {
                         'status': 'success',
-                        'message': message
+                        'message': message,
+                        'version': version
                     }
                 else:
                     self._hide_loading()

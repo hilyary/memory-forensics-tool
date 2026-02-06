@@ -1509,6 +1509,21 @@
                         <span>自定义Flag</span>
                     </button>
                 </div>
+
+                <!-- 系统信息 -->
+                <div class="sidebar-section system-info-section">
+                    <div class="system-info-item" id="vol3Status">
+                        <div class="system-info-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="system-info-content">
+                            <div class="system-info-label">Volatility 3</div>
+                            <div class="system-info-value" id="vol3Version">检测中...</div>
+                        </div>
+                    </div>
+                </div>
             </aside>
 
             <!-- 主内容区 -->
@@ -2298,6 +2313,61 @@
         </div>
 
         <style>
+            /* 系统信息区域样式 */
+            .system-info-section {
+                margin-top: auto;
+                padding-top: 16px;
+                border-top: 1px solid var(--border-color, #e2e8f0);
+            }
+            .system-info-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                background: var(--bg-secondary, #f8fafc);
+                border-radius: 8px;
+                cursor: default;
+            }
+            .system-info-icon {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #3b82f6;
+                background: #dbeafe;
+                border-radius: 6px;
+                flex-shrink: 0;
+            }
+            .system-info-icon svg {
+                width: 18px;
+                height: 18px;
+            }
+            .system-info-content {
+                flex: 1;
+                min-width: 0;
+            }
+            .system-info-label {
+                font-size: 11px;
+                color: var(--text-tertiary, #94a3b8);
+                font-weight: 500;
+                margin-bottom: 2px;
+            }
+            .system-info-value {
+                font-size: 13px;
+                color: var(--text-primary, #1e293b);
+                font-weight: 600;
+            }
+            .system-info-value.installed {
+                color: #10b981;
+            }
+            .system-info-value.not-installed {
+                color: #ef4444;
+            }
+            .system-info-value.checking {
+                color: #f59e0b;
+            }
+
             .os-type-btn {
                 display: flex;
                 flex-direction: column;
@@ -8087,6 +8157,10 @@
 
                     try {
                         const result = await this.api.check_volatility3();
+
+                        // 更新侧边栏版本信息显示
+                        this.updateVol3VersionDisplay(result.data);
+
                         if (result.status === 'success' && result.data.installed) {
                             return true;
                         } else {
@@ -8099,6 +8173,20 @@
                         // 检测失败时也显示安装提示
                         this.showVolatility3InstallDialog({});
                         return false;
+                    }
+                }
+
+                updateVol3VersionDisplay(vol3Info) {
+                    const versionElement = document.getElementById('vol3Version');
+                    if (!versionElement) return;
+
+                    if (vol3Info.installed) {
+                        const version = vol3Info.version || '未知版本';
+                        versionElement.textContent = `v${version}`;
+                        versionElement.className = 'system-info-value installed';
+                    } else {
+                        versionElement.textContent = '未安装';
+                        versionElement.className = 'system-info-value not-installed';
                     }
                 }
 
@@ -8170,6 +8258,12 @@
                             // 显示成功提示
                             this.showToast('success', '安装成功', result.message);
                             this.setSystemStatus('Volatility 3 就绪', 'active');
+
+                            // 更新侧边栏版本显示
+                            this.updateVol3VersionDisplay({
+                                installed: true,
+                                version: result.version
+                            });
                         } else {
                             // 安装失败
                             if (btn) {
