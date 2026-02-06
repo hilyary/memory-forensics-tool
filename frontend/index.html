@@ -8148,13 +8148,18 @@
                     try {
                         const result = await this.api.check_volatility3();
 
+                        // 调试日志
+                        console.log('[checkVolatility3] 检测结果:', result);
+
                         // 更新侧边栏版本信息显示
                         this.updateVol3VersionDisplay(result.data);
 
                         if (result.status === 'success' && result.data.installed) {
+                            console.log('[checkVolatility3] Volatility 3 已安装，设置状态为就绪');
                             this.setSystemStatus('Volatility 3 就绪', 'active');
                             return true;
                         } else {
+                            console.log('[checkVolatility3] Volatility 3 未安装，设置状态为等待');
                             this.setSystemStatus('等待 Volatility 3', 'warning');
                             // 根据参数决定是否显示安装提示对话框
                             if (showDialog) {
@@ -8191,16 +8196,6 @@
                     const platform = detectionResult.platform || 'Unknown';
                     const installCommand = detectionResult.install_command || 'pip install volatility3';
 
-                    // 根据平台获取安装说明
-                    let platformNote = '';
-                    if (platform === 'Windows') {
-                        platformNote = 'Windows 系统将使用 pip 安装 Volatility 3（使用清华镜像加速）。';
-                    } else if (platform === 'Darwin') {
-                        platformNote = 'macOS 系统将使用 pip3 安装 Volatility 3（使用清华镜像加速）。';
-                    } else if (platform === 'Linux') {
-                        platformNote = 'Linux 系统将使用 pip3 --user 安装 Volatility 3（使用清华镜像加速）。';
-                    }
-
                     const overlay = document.createElement('div');
                     overlay.className = 'vol3-install-overlay';
                     overlay.innerHTML = `
@@ -8212,8 +8207,6 @@
                             </div>
                             <h2>需要安装 Volatility 3</h2>
                             <p>析镜需要 Volatility 3 框架来进行内存分析。</p>
-                            <p class="vol3-install-note">${platformNote}</p>
-                            <p class="vol3-install-tip">💡 使用清华 PyPI 镜像加速下载</p>
                             <div class="vol3-install-actions">
                                 <button class="vol3-install-btn" id="installVol3Btn">
                                     <span>一键安装</span>
