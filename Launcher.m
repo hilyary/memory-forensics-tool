@@ -5,11 +5,13 @@ int main(int argc, const char * argv[]) {
         // 获取可执行文件所在目录
         NSString *executablePath = [[NSBundle mainBundle] executablePath];
         NSString *executableDir = [executablePath stringByDeletingLastPathComponent];
-        NSString *pythonBinary = [executableDir stringByAppendingPathComponent:@"LensAnalysis"];
+        NSString *pythonBinary = [executableDir stringByAppendingPathComponent:@"LensAnalysis.bin"];
+
+        NSLog(@"Launcher: Starting, dir=%@", executableDir);
 
         // 检查 Python 可执行文件是否存在
         if (![[NSFileManager defaultManager] fileExistsAtPath:pythonBinary]) {
-            NSLog(@"Python binary not found at: %@", pythonBinary);
+            NSLog(@"ERROR: Python binary not found at: %@", pythonBinary);
             return 1;
         }
 
@@ -17,15 +19,7 @@ int main(int argc, const char * argv[]) {
         NSTask *task = [[NSTask alloc] init];
         [task setLaunchPath:pythonBinary];
         [task setCurrentDirectoryPath:executableDir];
-
-        // 继承当前环境
         [task setEnvironment:[[NSProcessInfo processInfo] environment]];
-
-        // 设置标准输入输出为 null（避免写入失败导致崩溃）
-        NSFileHandle *nullHandle = [NSFileHandle fileHandleForReadingAtPath:@"/dev/null"];
-        [task setStandardInput:nullHandle];
-        [task setStandardOutput:nullHandle];
-        [task setStandardError:nullHandle];
 
         // 启动任务
         @try {
@@ -33,7 +27,7 @@ int main(int argc, const char * argv[]) {
             [task waitUntilExit];
             return [task terminationStatus];
         } @catch (NSException *exception) {
-            NSLog(@"Failed to launch Python binary: %@", exception);
+            NSLog(@"ERROR: Failed to launch: %@", exception);
             return 1;
         }
     }
