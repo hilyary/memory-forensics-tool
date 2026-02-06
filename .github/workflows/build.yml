@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks
+          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks PyQt5
 
       - name: Build with Nuitka
         run: |
@@ -63,10 +63,12 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --include-package=webview.platforms.cocoa \
+            --include-package=webview.platforms.qt \
             --include-module=socks \
-            --include-package=objc \
-            --include-module=PyObjCTools \
+            --include-package=PyQt5 \
+            --include-package=PyQt5.QtCore \
+            --include-package=PyQt5.QtGui \
+            --include-package=PyQt5.QtWidgets \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
@@ -134,10 +136,17 @@ jobs:
           find dist/LensAnalysis.app -type f -perm 644 -exec chmod +x {} \;
           # 特别确保主可执行文件有执行权限
           chmod +x dist/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
-          # 移除所有扩展属性（避免 macOS Gatekeeper 阻止）
-          xattr -cr dist/LensAnalysis.app
           echo "=== Permissions fixed ==="
           ls -la dist/LensAnalysis.app/Contents/MacOS/
+
+      - name: Remove quarantine and re-sign
+        run: |
+          echo "=== Removing quarantine attributes ==="
+          # 移除隔离属性，避免双击时无法启动
+          xattr -cr dist/LensAnalysis.app
+          # 重新签名
+          codesign --force --deep --sign - dist/LensAnalysis.app
+          echo "=== Done ==="
 
       - name: List build output
         run: |
