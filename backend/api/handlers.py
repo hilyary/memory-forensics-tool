@@ -5099,9 +5099,18 @@ if __name__ == '__main__':
             import subprocess
             import shutil
             import platform
+            import sys
 
             system = platform.system()
             logger.info(f"检测 Volatility 3，平台: {system}")
+
+            # 清除可能的模块缓存，确保检测最新状态
+            if 'volatility3' in sys.modules:
+                del sys.modules['volatility3']
+            # 同时清除可能的子模块缓存
+            modules_to_remove = [k for k in sys.modules.keys() if k.startswith('volatility3.')]
+            for module in modules_to_remove:
+                del sys.modules[module]
 
             # 检查是否能导入 volatility3 模块
             can_import = False
@@ -5109,8 +5118,8 @@ if __name__ == '__main__':
                 import volatility3
                 can_import = True
                 logger.info("Volatility 3 模块可导入")
-            except ImportError:
-                logger.info("Volatility 3 模块不可导入")
+            except ImportError as e:
+                logger.info(f"Volatility 3 模块不可导入: {e}")
 
             # 检查 vol 命令是否可用（根据平台）
             vol_path = None
