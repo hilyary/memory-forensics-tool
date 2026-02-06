@@ -14,10 +14,11 @@ from datetime import datetime
 
 # ===== 重要：在导入 webview 之前设置 backend =====
 # Nuitka/PyInstaller 需要明确指定 PyWebView backend
-# Qt backend 跨平台兼容性最好
+# 对于 macOS 打包应用，尝试使用 QT 后端而不是 Cocoa
+# QT 后端对 app bundle 启动的支持更好
 if platform.system() == 'Darwin':
-    # macOS: 优先使用 Cocoa，失败则使用 Qt
-    os.environ.setdefault('PYWEBVIEW_BACKEND', 'cocoa')
+    # macOS: 使用 QT 而不是 Cocoa，解决双击打不开的问题
+    os.environ.setdefault('PYWEBVIEW_BACKEND', 'qt')
 elif platform.system() == 'Windows':
     # Windows: 使用 MSHTML 或 Edge
     os.environ.setdefault('PYWEBVIEW_BACKEND', 'edge')
@@ -185,6 +186,19 @@ def main():
     import sys
     import os
     import traceback
+
+    # 调试用：显示对话框确认应用启动
+    if platform.system() == 'Darwin':
+        try:
+            import tkinter
+            root = tkinter.Tk()
+            root.withdraw()
+            result = tkinter.messagebox.askyesno("LensAnalysis", "应用正在启动...\n\n请点击「是」继续")
+            root.destroy()
+            if not result:
+                sys.exit(0)
+        except Exception as e:
+            pass  # 如果 tkinter 不可用，继续执行
 
     try:
         # 检查是否有 GUI 会话（macOS 双击启动时需要）
