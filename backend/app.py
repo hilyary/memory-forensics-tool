@@ -10,6 +10,7 @@ from pathlib import Path
 from threading import Thread
 import json
 import platform
+from datetime import datetime
 
 # ===== 重要：在导入 webview 之前设置 backend =====
 # Nuitka/PyInstaller 需要明确指定 PyWebView backend
@@ -182,26 +183,65 @@ class LensAnalysisApp:
 def main():
     """主函数"""
     import sys
+    import os
+    import traceback
 
-    # 添加启动日志，帮助调试双击问题
-    logger.info("=" * 60)
-    logger.info("LensAnalysis 启动")
-    logger.info(f"Python executable: {sys.executable}")
-    logger.info(f"sys.frozen: {getattr(sys, 'frozen', False)}")
-    logger.info(f"Command line args: {sys.argv}")
-    logger.info("=" * 60)
-
-    # 创建一个标记文件，表示应用已启动
     try:
-        import tempfile
-        marker_file = Path(tempfile.gettempdir()) / 'lensanalysis_started.txt'
-        marker_file.write_text(f"Started at: {Path(__file__)}\nArgs: {sys.argv}\n")
-        logger.info(f"启动标记文件已创建: {marker_file}")
-    except Exception as e:
-        logger.warning(f"无法创建启动标记: {e}")
+        # 检查是否有 GUI 会话（macOS 双击启动时需要）
+        if platform.system() == 'Darwin':
+            # 检查 DISPLAY 环境变量或是否有窗口服务器
+            display = os.environ.get('DISPLAY')
+            logger.info(f"DISPLAY 环境变量: {display}")
 
-    app = LensAnalysisApp()
-    app.start()
+            # 检查是否在远程 SSH 会话中（没有 GUI）
+            ssh_connection = os.environ.get('SSH_CONNECTION')
+            if ssh_connection:
+                logger.warning(f"检测到 SSH 连接，可能无法显示 GUI")
+
+        # 添加启动日志，帮助调试双击问题
+        logger.info("=" * 60)
+        logger.info("LensAnalysis 启动")
+        logger.info(f"Python executable: {sys.executable}")
+        logger.info(f"sys.frozen: {getattr(sys, 'frozen', False)}")
+        logger.info(f"Command line args: {sys.argv}")
+        logger.info(f"Working directory: {os.getcwd()}")
+        logger.info("=" * 60)
+
+        # 创建一个标记文件，表示应用已启动
+        try:
+            import tempfile
+            marker_file = Path(tempfile.gettempdir()) / 'lensanalysis_started.txt'
+            marker_file.write_text(f"Started at: {datetime.now()}\nArgs: {sys.argv}\nDir: {os.getcwd()}\n")
+            logger.info(f"启动标记文件已创建: {marker_file}")
+        except Exception as e:
+            logger.warning(f"无法创建启动标记: {e}")
+
+        app = LensAnalysisApp()
+        app.start()
+
+    except Exception as e:
+        # 捕获所有异常并记录到文件
+        error_msg = f"ERROR: {e}\n{traceback.format_exc()}"
+        logger.error(error_msg)
+
+        # 写入错误文件
+        try:
+            import tempfile
+            error_file = Path(tempfile.gettempdir()) / 'lensanalysis_error.txt'
+            error_file.write_text(error_msg)
+        except:
+            pass
+
+        # 显示错误对话框
+        try:
+            import tkinter
+            root = tkinter.Tk()
+            root.withdraw()
+            tkinter.messagebox.showerror("LensAnalysis 启动失败", str(e))
+        except:
+            pass
+
+        sys.exit(1)
 
 
 if __name__ == '__main__':
