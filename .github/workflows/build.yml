@@ -41,6 +41,9 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
     steps:
       - uses: actions/checkout@v4
 
@@ -56,12 +59,13 @@ jobs:
         run: |
           pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks
 
-      - name: Build with Nuitka
+      - name: Build with Nuitka (${{ matrix.arch }})
         run: |
           python -m nuitka --standalone --assume-yes-for-downloads \
-            --output-dir=dist \
+            --output-dir=dist-${{ matrix.arch }} \
             --output-filename=LensAnalysis \
             --jobs=4 \
+            --macos-target-arch=${{ matrix.arch }} \
             --include-data-dir=frontend=frontend \
             --include-package=webview.platforms.cocoa \
             --include-module=socks \
@@ -83,18 +87,18 @@ jobs:
         run: |
           python3 << 'PYTHON'
           import plistlib
-          p = plistlib.load(open('dist/LensAnalysis.app/Contents/Info.plist', 'rb'))
+          p = plistlib.load(open('dist-${{ matrix.arch }}/LensAnalysis.app/Contents/Info.plist', 'rb'))
           p['NSPrincipalClass'] = 'NSApplication'
           p['LSBackgroundOnly'] = False
           p['LSUIElement'] = False
           p['NSHighResolutionCapable'] = True
-          plistlib.dump(p, open('dist/LensAnalysis.app/Contents/Info.plist', 'wb'))
+          plistlib.dump(p, open('dist-${{ matrix.arch }}/LensAnalysis.app/Contents/Info.plist', 'wb'))
           print('Info.plist fixed')
           PYTHON
 
       - name: Re-sign after Info.plist modification
         run: |
-          codesign --force --deep --sign - dist/LensAnalysis.app
+          codesign --force --deep --sign - dist-${{ matrix.arch }}/LensAnalysis.app
           echo "重新签名完成"
 
       - name: Copy PyObjC Python files
@@ -106,44 +110,44 @@ jobs:
           echo "Site packages: $SITE_PACKAGES"
 
           # 创建 objc 目录
-          mkdir -p dist/LensAnalysis.app/Contents/MacOS/objc
-          mkdir -p dist/LensAnalysis.app/Contents/MacOS/WebKit
+          mkdir -p dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/objc
+          mkdir -p dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/WebKit
 
           # 复制 objc 的 .py 文件
           if [ -d "$SITE_PACKAGES/objc" ]; then
-            cp "$SITE_PACKAGES/objc/"*.py dist/LensAnalysis.app/Contents/MacOS/objc/ 2>/dev/null || true
+            cp "$SITE_PACKAGES/objc/"*.py dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/objc/ 2>/dev/null || true
             echo "Copied objc .py files"
           else
             echo "Warning: objc directory not found at $SITE_PACKAGES/objc"
           fi
 
           # 复制 Foundation, AppKit, CoreFoundation, WebKit 的 .py 文件
-          cp "$SITE_PACKAGES/Foundation/"*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
-          cp "$SITE_PACKAGES/AppKit/"*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
-          cp "$SITE_PACKAGES/CoreFoundation/"*.py dist/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
-          cp "$SITE_PACKAGES/WebKit/__init__.py" dist/LensAnalysis.app/Contents/MacOS/WebKit/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/Foundation/"*.py dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/AppKit/"*.py dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/CoreFoundation/"*.py dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/ 2>/dev/null || true
+          cp "$SITE_PACKAGES/WebKit/__init__.py" dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/WebKit/ 2>/dev/null || true
 
           echo "PyObjC files copied"
-          ls -la dist/LensAnalysis.app/Contents/MacOS/objc/ || echo "objc directory is empty or doesn't exist"
+          ls -la dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/objc/ || echo "objc directory is empty or doesn't exist"
 
       - name: Fix executable permissions
         run: |
           echo "=== Fixing executable permissions ==="
           # 给 app bundle 内的所有可执行文件添加执行权限
-          find dist/LensAnalysis.app -type f -name "*.so" -exec chmod +x {} \;
-          find dist/LensAnalysis.app -type f -perm 644 -exec chmod +x {} \;
+          find dist-${{ matrix.arch }}/LensAnalysis.app -type f -name "*.so" -exec chmod +x {} \;
+          find dist-${{ matrix.arch }}/LensAnalysis.app -type f -perm 644 -exec chmod +x {} \;
           # 特别确保主可执行文件有执行权限
-          chmod +x dist/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
+          chmod +x dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/* 2>/dev/null || true
           echo "=== Permissions fixed ==="
-          ls -la dist/LensAnalysis.app/Contents/MacOS/
+          ls -la dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/
 
       - name: Remove quarantine and re-sign
         run: |
           echo "=== Removing quarantine attributes ==="
           # 移除隔离属性，避免双击时无法启动
-          xattr -cr dist/LensAnalysis.app
+          xattr -cr dist-${{ matrix.arch }}/LensAnalysis.app
           # 重新签名
-          codesign --force --deep --sign - dist/LensAnalysis.app
+          codesign --force --deep --sign - dist-${{ matrix.arch }}/LensAnalysis.app
           echo "=== Done ==="
 
       - name: Create launcher app for double-click support
@@ -151,17 +155,17 @@ jobs:
           echo "=== Creating launcher app ==="
 
           # 重命名 Nuitka 生成的 app 为实际应用
-          mv dist/LensAnalysis.app dist/LensAnalysisRuntime.app
+          mv dist-${{ matrix.arch }}/LensAnalysis.app dist-${{ matrix.arch }}/LensAnalysisRuntime.app
 
           # 创建启动器 app 结构
-          mkdir -p dist/LensAnalysis.app/Contents/MacOS
-          mkdir -p dist/LensAnalysis.app/Contents/Resources
+          mkdir -p dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS
+          mkdir -p dist-${{ matrix.arch }}/LensAnalysis.app/Contents/Resources
 
           # 复制图标
-          cp frontend/assets/LensAnalysis-icon.icns dist/LensAnalysis.app/Contents/Resources/ 2>/dev/null || true
+          cp frontend/assets/LensAnalysis-icon.icns dist-${{ matrix.arch }}/LensAnalysis.app/Contents/Resources/ 2>/dev/null || true
 
           # 创建 Info.plist
-          cat > dist/LensAnalysis.app/Contents/Info.plist << 'PLIST'
+          cat > dist-${{ matrix.arch }}/LensAnalysis.app/Contents/Info.plist << 'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -187,7 +191,7 @@ jobs:
           PLIST
 
           # 创建启动器可执行文件
-          cat > dist/LensAnalysis.app/Contents/MacOS/LensAnalysisLauncher << 'LAUNCHER'
+          cat > dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/LensAnalysisLauncher << 'LAUNCHER'
           #!/bin/bash
           # LensAnalysis 启动器
           # 使用 open 命令启动实际的运行时应用
@@ -205,55 +209,55 @@ jobs:
           open "$RUNTIME_APP"
           LAUNCHER
 
-          chmod +x dist/LensAnalysis.app/Contents/MacOS/LensAnalysisLauncher
+          chmod +x dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/LensAnalysisLauncher
 
           # 复制运行时 app 到启动器 app 内部
-          cp -R dist/LensAnalysisRuntime.app dist/LensAnalysis.app/Contents/MacOS/
+          cp -R dist-${{ matrix.arch }}/LensAnalysisRuntime.app dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/
 
           # 移除隔离属性并签名
-          xattr -cr dist/LensAnalysis.app
-          codesign --force --deep --sign - dist/LensAnalysis.app
+          xattr -cr dist-${{ matrix.arch }}/LensAnalysis.app
+          codesign --force --deep --sign - dist-${{ matrix.arch }}/LensAnalysis.app
 
           echo "=== Launcher app created ==="
-          ls -la dist/LensAnalysis.app/Contents/MacOS/
+          ls -la dist-${{ matrix.arch }}/LensAnalysis.app/Contents/MacOS/
 
       - name: List build output
         run: |
-          echo "=== dist directory ==="
-          ls -la dist/ || echo "dist directory not found"
+          echo "=== dist-${{ matrix.arch }} directory ==="
+          ls -la dist-${{ matrix.arch }}/ || echo "dist-${{ matrix.arch }} directory not found"
           echo ""
           echo "=== Looking for LensAnalysis ==="
-          find dist -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
+          find dist-${{ matrix.arch }} -name "LensAnalysis*" -type f -o -name "LensAnalysis*" -type d || echo "No LensAnalysis files found"
 
       - name: Create DMG
         run: |
-          echo "=== Creating DMG ==="
+          echo "=== Creating DMG for ${{ matrix.arch }} ==="
           # 创建临时目录用于 DMG
           mkdir -p dmg_contents
 
           # 复制 app 到 DMG 目录
-          cp -R dist/LensAnalysis.app dmg_contents/
+          cp -R dist-${{ matrix.arch }}/LensAnalysis.app dmg_contents/
 
           # 创建 Applications 文件夹的符号链接（方便拖拽安装）
           ln -s /Applications dmg_contents/Applications
 
           # 创建 DMG（使用 UDZO 格式，兼容性更好）
-          hdiutil create -volname "LensAnalysis" \
+          hdiutil create -volname "LensAnalysis (${{ matrix.arch }})" \
                          -srcfolder dmg_contents \
                          -ov -format UDZO \
                          -imagekey zlib-level=9 \
-                         "dist/LensAnalysis-1.0.0-macOS.dmg"
+                         "dist-${{ matrix.arch }}/LensAnalysis-1.0.0-macOS-${{ matrix.arch }}.dmg"
 
           # 清理
           rm -rf dmg_contents
 
           echo "DMG created:"
-          ls -la dist/*.dmg
+          ls -la dist-${{ matrix.arch }}/*.dmg
 
-      - name: Upload macOS app and DMG
+      - name: Upload macOS app and DMG (${{ matrix.arch }})
         uses: actions/upload-artifact@v4
         with:
-          name: LensAnalysis-macOS
+          name: LensAnalysis-macOS-${{ matrix.arch }}
           path: |
-            dist/LensAnalysis.app
-            dist/*.dmg
+            dist-${{ matrix.arch }}/LensAnalysis.app
+            dist-${{ matrix.arch }}/*.dmg
