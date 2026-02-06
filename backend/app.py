@@ -119,6 +119,11 @@ class LensAnalysisApp:
             'background_color': '#ffffff'
         }
 
+        # macOS 打包后设置窗口总是在最前（解决双击打不开的问题）
+        if platform.system() == 'Darwin' and getattr(sys, 'frozen', False):
+            window_args['on_top'] = True
+            logger.info("已设置窗口置顶")
+
         # PyWebView 的 icon 参数支持情况:
         # - macOS Cocoa: 不支持
         # - Windows MSHTML/Edge: 不支持
@@ -138,6 +143,16 @@ class LensAnalysisApp:
 
         # 将窗口引用传递给 APIHandler，用于退出功能
         self.api_handler.set_window(self.window)
+
+        # macOS 打包后需要显式激活 NSApplication
+        # 解决双击 .app bundle 时窗口无法显示的问题
+        if platform.system() == 'Darwin' and getattr(sys, 'frozen', False):
+            try:
+                from AppKit import NSApplication
+                NSApplication.sharedApplication().activateIgnoringOtherApps_(True)
+                logger.info("已激活 NSApplication")
+            except Exception as e:
+                logger.warning(f"无法激活 NSApplication: {e}")
 
         # 必须使用 http_server=True 才能让 JS API 工作
         webview.start(debug=False, http_server=True)
