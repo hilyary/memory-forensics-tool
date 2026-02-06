@@ -48,3 +48,9 @@ Thumbs.db
 venv/
 env/
 ENV/
+
+# Local test files
+LensAnalysisLauncher/
+*.applescript
+test_*.sh
+*.command
