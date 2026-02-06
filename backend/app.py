@@ -12,20 +12,7 @@ import json
 import platform
 from datetime import datetime
 
-# ===== 重要：在导入 webview 之前设置 backend =====
-# Nuitka/PyInstaller 需要明确指定 PyWebView backend
-# 对于 macOS 打包应用，尝试使用 QT 后端而不是 Cocoa
-# QT 后端对 app bundle 启动的支持更好
-if platform.system() == 'Darwin':
-    # macOS: 使用 QT 而不是 Cocoa，解决双击打不开的问题
-    os.environ.setdefault('PYWEBVIEW_BACKEND', 'qt')
-elif platform.system() == 'Windows':
-    # Windows: 使用 MSHTML 或 Edge
-    os.environ.setdefault('PYWEBVIEW_BACKEND', 'edge')
-else:
-    # Linux: 使用 Qt
-    os.environ.setdefault('PYWEBVIEW_BACKEND', 'qt')
-
+# 导入 webview（不在导入前设置后端，避免 Nuitka 冲突）
 import webview
 
 # Add parent directory to path

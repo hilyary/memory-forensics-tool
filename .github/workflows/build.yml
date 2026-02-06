@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks PyQt5
+          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks
 
       - name: Build with Nuitka
         run: |
@@ -63,12 +63,10 @@ jobs:
             --output-filename=LensAnalysis \
             --jobs=4 \
             --include-data-dir=frontend=frontend \
-            --include-package=webview.platforms.qt \
+            --include-package=webview.platforms.cocoa \
             --include-module=socks \
-            --include-package=PyQt5 \
-            --include-package=PyQt5.QtCore \
-            --include-package=PyQt5.QtGui \
-            --include-package=PyQt5.QtWidgets \
+            --include-package=objc \
+            --include-module=PyObjCTools \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
