@@ -119,11 +119,6 @@ class LensAnalysisApp:
             'background_color': '#ffffff'
         }
 
-        # macOS 打包后设置窗口总是在最前（解决双击打不开的问题）
-        if platform.system() == 'Darwin' and getattr(sys, 'frozen', False):
-            window_args['on_top'] = True
-            logger.info("已设置窗口置顶")
-
         # PyWebView 的 icon 参数支持情况:
         # - macOS Cocoa: 不支持
         # - Windows MSHTML/Edge: 不支持
@@ -143,16 +138,6 @@ class LensAnalysisApp:
 
         # 将窗口引用传递给 APIHandler，用于退出功能
         self.api_handler.set_window(self.window)
-
-        # macOS 打包后需要显式激活 NSApplication
-        # 解决双击 .app bundle 时窗口无法显示的问题
-        if platform.system() == 'Darwin' and getattr(sys, 'frozen', False):
-            try:
-                from AppKit import NSApplication
-                NSApplication.sharedApplication().activateIgnoringOtherApps_(True)
-                logger.info("已激活 NSApplication")
-            except Exception as e:
-                logger.warning(f"无法激活 NSApplication: {e}")
 
         # 必须使用 http_server=True 才能让 JS API 工作
         webview.start(debug=False, http_server=True)
@@ -196,6 +181,25 @@ class LensAnalysisApp:
 
 def main():
     """主函数"""
+    import sys
+
+    # 添加启动日志，帮助调试双击问题
+    logger.info("=" * 60)
+    logger.info("LensAnalysis 启动")
+    logger.info(f"Python executable: {sys.executable}")
+    logger.info(f"sys.frozen: {getattr(sys, 'frozen', False)}")
+    logger.info(f"Command line args: {sys.argv}")
+    logger.info("=" * 60)
+
+    # 创建一个标记文件，表示应用已启动
+    try:
+        import tempfile
+        marker_file = Path(tempfile.gettempdir()) / 'lensanalysis_started.txt'
+        marker_file.write_text(f"Started at: {Path(__file__)}\nArgs: {sys.argv}\n")
+        logger.info(f"启动标记文件已创建: {marker_file}")
+    except Exception as e:
+        logger.warning(f"无法创建启动标记: {e}")
+
     app = LensAnalysisApp()
     app.start()
 
