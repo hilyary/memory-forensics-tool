@@ -516,6 +516,18 @@ class APIHandler:
         """设置窗口引用"""
         self._window = window
 
+    def resize_window(self, width: int, height: int) -> Dict[str, Any]:
+        """调整窗口大小"""
+        if hasattr(self, '_window') and self._window:
+            try:
+                self._window.resize(width, height)
+                logger.info(f'窗口大小已调整为: {width}x{height}')
+                return {'status': 'success', 'message': f'窗口已调整为 {width}x{height}'}
+            except Exception as e:
+                logger.error(f'调整窗口大小失败: {e}')
+                return {'status': 'error', 'message': f'调整窗口大小失败: {str(e)}'}
+        return {'status': 'error', 'message': '窗口引用不存在'}
+
     def set_license_manager(self, license_manager):
         """设置许可证管理器"""
         self._license_manager = license_manager
@@ -546,14 +558,45 @@ class APIHandler:
 
     def get_license_status(self) -> Dict[str, Any]:
         """获取许可证状态"""
+        logger.info("=========== get_license_status 被调用 ===========")
         if hasattr(self, '_app') and self._app:
+            status = self._app.get_license_status()
+            logger.info(f"许可证状态: {status}")
             return {
                 'status': 'success',
-                'data': self._app.get_license_status()
+                'data': status
             }
+        logger.warning("app 未初始化")
         return {
             'status': 'success',
             'data': {'valid': False}
+        }
+
+    def test_api(self) -> Dict[str, Any]:
+        """测试API是否工作"""
+        logger.info("=========== test_api 被调用 ===========")
+        return {
+            'status': 'success',
+            'message': 'API工作正常',
+            'timestamp': int(time.time())
+        }
+
+    def get_machine_code(self) -> Dict[str, Any]:
+        """获取当前机器的机器码"""
+        logger.info("get_machine_code 被调用")
+        if hasattr(self, '_license_manager') and self._license_manager:
+            machine_code = self._license_manager.get_machine_code()
+            logger.info(f"机器码获取成功: {machine_code}")
+            return {
+                'status': 'success',
+                'data': {
+                    'machine_code': machine_code
+                }
+            }
+        logger.error("license_manager 未初始化")
+        return {
+            'status': 'error',
+            'message': '无法获取机器码'
         }
 
     def save_terms_accepted(self) -> Dict[str, Any]:

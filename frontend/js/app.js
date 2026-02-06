@@ -21,6 +21,16 @@ class ForensicsApp {
         // 绑定事件
         this.bindEvents();
 
+        // 检查API状态
+        this.log('isDemoMode: ' + this.isDemoMode);
+        this.log('window.pywebview: ' + (window.pywebview ? '存在' : '不存在'));
+        this.log('this.api: ' + (this.api ? '存在' : '不存在'));
+        if (this.api) {
+            const apiMethods = Object.keys(this.api);
+            this.log('API 方法数量: ' + apiMethods.length);
+            this.log('get_license_status 存在: ' + apiMethods.includes('get_license_status'));
+        }
+
         if (this.isDemoMode) {
             this.log('运行在演示模式 (无 pywebview)');
             this.setSystemStatus('演示模式', 'warning');
@@ -81,6 +91,12 @@ class ForensicsApp {
         const activateBtn = document.getElementById('activateBtn');
         if (activateBtn) {
             activateBtn.addEventListener('click', () => this.activateLicense());
+        }
+
+        // 复制机器码按钮
+        const copyMachineCodeBtn = document.getElementById('copyMachineCodeBtn');
+        if (copyMachineCodeBtn) {
+            copyMachineCodeBtn.addEventListener('click', () => this.copyMachineCode());
         }
     }
 
@@ -778,10 +794,26 @@ class ForensicsApp {
      * 检查许可证状态
      */
     async checkLicenseStatus() {
-        if (!this.api) return;
+        this.log('checkLicenseStatus: 开始检查');
 
+        if (!this.api) {
+            this.log('checkLicenseStatus: this.api 为空', 'error');
+            return;
+        }
+
+        // 先测试API是否工作
+        try {
+            this.log('checkLicenseStatus: 测试API连接...');
+            const testResult = await this.api.test_api();
+            this.log('checkLicenseStatus: 测试成功 ' + JSON.stringify(testResult));
+        } catch (error) {
+            this.log('checkLicenseStatus: 测试API失败 ' + error.message, 'error');
+        }
+
+        this.log('checkLicenseStatus: 调用 get_license_status');
         try {
             const result = await this.api.get_license_status();
+            this.log('checkLicenseStatus: 收到响应 ' + JSON.stringify(result));
 
             if (result.status === 'success' && result.data && result.data.valid) {
                 // 许可证有效，隐藏激活界面，显示主界面
@@ -797,6 +829,7 @@ class ForensicsApp {
             }
         } catch (error) {
             this.log('检查许可证失败: ' + error.message, 'error');
+            console.error('License check error:', error);
             // 错误时也显示激活界面
             this.showLicenseScreen();
         }
@@ -833,7 +866,7 @@ class ForensicsApp {
                 // 激活成功，等待1秒后提示重启
                 setTimeout(() => {
                     if (result.require_restart) {
-                        this.showToast('success', '激活成功', '请重启应用以完成激活');
+                        this.toast('success', '激活成功', '请重启应用以完成激活');
                         setTimeout(() => {
                             this.api.exit();
                         }, 2000);
@@ -867,6 +900,92 @@ class ForensicsApp {
 
         // 显示激活界面
         if (licenseScreen) licenseScreen.style.display = 'flex';
+
+        // 加载机器码
+        this.loadMachineCode();
+    }
+
+    /**
+     * 加载并显示机器码
+     */
+    async loadMachineCode() {
+        const machineCodeValue = document.getElementById('machineCodeValue');
+        if (!machineCodeValue) {
+            console.error('[loadMachineCode] 找不到 machineCodeValue 元素');
+            return;
+        }
+
+        console.log('[loadMachineCode] 开始加载机器码');
+        console.log('[loadMachineCode] this.api:', this.api);
+
+        if (!this.api) {
+            console.log('[loadMachineCode] 演示模式：使用模拟机器码');
+            this.updateMachineCodeDisplay('DEMO-MACH-CODE');
+            return;
+        }
+
+        try {
+            console.log('[loadMachineCode] 调用 api.get_license_status()');
+            machineCodeValue.textContent = '正在获取...';
+
+            const result = await this.api.get_license_status();
+            console.log('[loadMachineCode] API返回:', result);
+            this.log('许可证状态API返回: ' + JSON.stringify(result));
+
+            if (result && result.status === 'success' && result.data && result.data.machine_code) {
+                this.updateMachineCodeDisplay(result.data.machine_code);
+                console.log('[loadMachineCode] 机器码设置成功:', result.data.machine_code);
+                this.log('机器码获取成功: ' + result.data.machine_code);
+            } else {
+                console.error('[loadMachineCode] 返回格式错误:', result);
+                this.log('无法从许可证状态获取机器码: ' + JSON.stringify(result), 'error');
+                machineCodeValue.textContent = '错误: ' + JSON.stringify(result || '无响应');
+            }
+        } catch (error) {
+            console.error('[loadMachineCode] 异常:', error);
+            this.log('获取机器码异常: ' + error.message, 'error');
+            machineCodeValue.textContent = '异常: ' + error.message;
+        }
+    }
+
+    /**
+     * 更新机器码显示
+     */
+    updateMachineCodeDisplay(machineCode) {
+        const machineCodeValue = document.getElementById('machineCodeValue');
+        if (machineCodeValue) {
+            machineCodeValue.textContent = machineCode;
+        }
+    }
+
+    /**
+     * 复制机器码到剪贴板
+     */
+    async copyMachineCode() {
+        const machineCodeValue = document.getElementById('machineCodeValue');
+        if (!machineCodeValue) return;
+
+        const machineCode = machineCodeValue.textContent;
+
+        try {
+            await navigator.clipboard.writeText(machineCode);
+            this.toast('success', '复制成功', '机器码已复制到剪贴板');
+        } catch (error) {
+            // 降级方案：使用传统方法
+            const textArea = document.createElement('textarea');
+            textArea.value = machineCode;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.toast('success', '复制成功', '机器码已复制到剪贴板');
+            } catch (err) {
+                this.toast('error', '复制失败', '无法复制机器码');
+            }
+            document.body.removeChild(textArea);
+        }
     }
 
     /**

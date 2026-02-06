@@ -1638,6 +1638,28 @@
     text-decoration: underline;
 }
 
+/* 关于页面许可证信息 */
+.about-license-info {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.license-line {
+    padding: 2px 0;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.license-machine-code {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 11px;
+}
+
+.license-info-loading {
+    color: var(--text-muted);
+}
+
 /* 中间：功能列表 */
 .about-center {
     flex: 1;

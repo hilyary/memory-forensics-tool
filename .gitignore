@@ -54,3 +54,9 @@ LensAnalysisLauncher/
 *.applescript
 test_*.sh
 *.command
+
+# Sensitive configuration
+.env.server
+.env
+*.key
+secrets/

@@ -107,13 +107,16 @@ class LensAnalysisApp:
             logger.error(f"前端文件不存在: {frontend_path}")
             raise FileNotFoundError(f"找不到前端文件: {frontend_path}")
 
+        # 如果未激活，不需要注入机器码（前端会通过API获取）
+        # 前端会在页面加载时调用 api.get_license_status() 获取机器码
+
         # 构建窗口参数
         window_args = {
             'title': '析镜 LensAnalysis - 内存取证分析工具',
             'url': frontend_path,
             'js_api': self.api_handler,
             'width': 1400,
-            'height': 900,
+            'height': 850,
             'min_size': (1200, 700),
             'resizable': True,
             'frameless': False,
@@ -138,10 +141,10 @@ class LensAnalysisApp:
         # 如果未激活，修改标题和大小显示激活界面
         if not self.license_valid:
             window_args['title'] = '析镜 - 激活'
-            window_args['width'] = 500
-            window_args['height'] = 400
+            window_args['width'] = 1220
+            window_args['height'] = 700
             window_args['resizable'] = False
-            window_args['min_size'] = (500, 400)
+            window_args['min_size'] = (1220, 700)
 
         self.window = webview.create_window(**window_args)
 
@@ -164,20 +167,45 @@ class LensAnalysisApp:
 
     def activate_license(self, license_key: str) -> Tuple[bool, str]:
         """激活许可证"""
-        return self.license_manager.activate_license(license_key)
+        success, message = self.license_manager.activate_license(license_key)
+
+        # 激活成功后，更新许可证状态
+        if success:
+            self._check_license()
+
+        return success, message
 
     def get_license_status(self) -> Dict:
-        """获取许可证状态"""
-        if self.license_valid and self.license_info:
-            return {
+        """获取许可证状态（实时读取，不使用缓存）"""
+        # 实时检查许可证状态
+        is_valid, message, license_info = self.license_manager.check_license()
+
+        # 获取机器码
+        logger.info("正在获取机器码...")
+        machine_code = self.license_manager.get_machine_code()
+        logger.info(f"机器码生成: {machine_code}")
+
+        # 更新缓存
+        self.license_valid = is_valid
+        self.license_info = license_info
+
+        if is_valid and license_info:
+            result = {
                 'valid': True,
-                'user': self.license_info.get('user', ''),
-                'activated_at': self.license_info.get('activated_at', 0),
-                'expiry': self.license_info.get('expiry', 0)
+                'user': license_info.get('user', ''),
+                'activated_at': license_info.get('activated_at', 0),
+                'expiry': license_info.get('expiry', 0),
+                'machine_code': machine_code
             }
-        return {
-            'valid': False
+            logger.info(f"返回许可证状态: {result}")
+            return result
+
+        result = {
+            'valid': False,
+            'machine_code': machine_code
         }
+        logger.info(f"返回许可证状态（未激活）: {result}")
+        return result
 
     def _get_app_icon(self) -> Path:
         """获取应用图标文件路径（跨平台）

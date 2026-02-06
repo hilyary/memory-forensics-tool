@@ -7,6 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>析镜 LensAnalysis - 内存取证分析工具</title>
+    <link rel="stylesheet" href="css/style.css?v=2.06">
+    <link rel="stylesheet" href="css/components.css?v=2.13">
     <style>
         /* 防止白屏 */
         body {
@@ -195,18 +197,20 @@
             }
         }
 
-        /* 激活界面样式 */
+        /* 激活界面样式 - 参考关于页面风格 */
         .license-screen {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%) !important;
+            background: #ffffff !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             z-index: 10000 !important;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         .license-bg-pattern {
@@ -215,106 +219,376 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image:
-                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            background: #ffffff;
         }
 
-        .license-content {
+        .license-dialog {
             position: relative;
-            background: white;
+            background: #ffffff;
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            padding: 48px;
+            display: flex;
+            width: 1020px !important;
+            max-width: calc(100vw - 40px) !important;
+            max-height: calc(100vh - 80px);
+            overflow: hidden;
+            border: 1px solid #e5e5e5;
+            animation: licenseIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes licenseIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* 左侧：品牌信息 */
+        .license-left {
+            flex: 0 0 280px;
+            padding: 24px 20px;
+            background: linear-gradient(180deg, #f0f4ff 0%, #e8f0ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border-right: 1px solid #e5e5e5;
+            justify-content: center;
+        }
+
+        /* 激活屏幕容器 - 用于放置对话框外部的装饰文字 */
+        .license-screen {
+            position: relative;
+        }
+
+        /* 竖排装饰文字 - 在对话框外部 */
+        .vertical-text-decoration-left,
+        .vertical-text-decoration-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-family: 'STKaiti', 'KaiTi', '楷体', serif;
+            font-size: 18px;
+            font-weight: 400;
+            color: rgba(100, 116, 139, 0.4);
+            letter-spacing: 12px;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+            opacity: 0;
+            animation: verticalTextFadeIn 1.5s ease-out forwards, verticalTextFloat 6s ease-in-out infinite 1.5s;
+        }
+
+        .vertical-text-decoration-left {
+            left: 40px;
+            animation-delay: 0s, 1.5s;
+        }
+
+        .vertical-text-decoration-right {
+            right: 40px;
+            animation-delay: 0.3s, 1.8s;
+        }
+
+        /* 竖排文字淡入动画 */
+        @keyframes verticalTextFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-50%) translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(-50%) translateY(0);
+            }
+        }
+
+        /* 竖排文字浮动动画 */
+        @keyframes verticalTextFloat {
+            0%, 100% {
+                transform: translateY(-50%) translateY(0);
+            }
+            50% {
+                transform: translateY(-50%) translateY(-8px);
+            }
+        }
+
+        .license-brand-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: white;
+            padding: 5px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .license-brand-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 3px 0;
+            letter-spacing: 2px;
+        }
+
+        .license-brand-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin: 0 0 18px 0;
+            letter-spacing: 1px;
+        }
+
+        /* 机器码卡片 */
+        .machine-card {
             width: 100%;
-            max-width: 420px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .machine-card-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .machine-code-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .machine-code-value {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: 0.5px;
+            word-break: break-all;
+            background: #f8fafc;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #1e293b;
+            color: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .copy-btn:hover {
+            background: #334155;
+            transform: translateY(-1px);
+        }
+
+        .machine-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin: 0;
+        }
+
+        /* 中间：激活流程 */
+        .license-center {
+            flex: 0 0 320px;
+            padding: 32px 28px;
+            border-right: 1px solid #e5e5e5;
+            min-width: 0;
+            background: linear-gradient(180deg, #f5f8ff 0%, #f0f5ff 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .license-info-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
             text-align: center;
         }
 
-        .license-logo-wrapper {
-            margin-bottom: 24px;
-        }
-
-        .license-logo-img {
-            height: 40px;
-            width: auto;
-        }
-
-        .license-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 8px 0;
-        }
-
-        .license-subtitle {
-            font-size: 14px;
-            color: #64748b;
-            margin: 0 0 32px 0;
-        }
-
-        .license-form {
+        .license-info-list {
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 10px;
+            justify-content: center;
         }
 
-        .license-input-group {
-            position: relative;
-        }
-
-        .license-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+        .license-info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #f8fafc;
+            border-radius: 10px;
             font-size: 14px;
+            color: #334155;
+        }
+
+        .license-info-item svg {
+            flex-shrink: 0;
+            color: #64748b;
+            width: 18px;
+            height: 18px;
+        }
+
+        /* 右侧：二维码和激活 */
+        .license-right {
+            flex: 0 0 400px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #fafbff 0%, #f5f7ff 100%);
+        }
+
+        .qrcode-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: 1px;
+            margin-bottom: 0;
+        }
+
+        .qrcode-box {
+            width: 260px;
+            height: 260px;
+            margin-top: 4px;
+        }
+
+        .qrcode-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qrcode-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            border-radius: 16px;
+        }
+
+        .qrcode-placeholder svg {
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .qrcode-placeholder p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .qrcode-tip {
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.5;
+            margin: 0 0 16px 0;
+        }
+
+        .qrcode-tip strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        /* 激活输入区域 */
+        .activate-card {
+            width: 100%;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+
+        .activate-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .activate-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .activate-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            font-size: 13px;
             font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            transition: all 0.2s;
+            background: #f8fafc;
+            color: #1e293b;
+            transition: all 0.2s ease;
             box-sizing: border-box;
         }
 
-        .license-input:focus {
-            outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .license-input::placeholder {
+        .activate-input::placeholder {
             color: #94a3b8;
         }
 
-        .license-btn {
-            padding: 12px 24px;
+        .activate-input:focus {
+            outline: none;
+            border-color: #1e293b;
+            background: white;
+        }
+
+        .activate-btn {
+            padding: 8px 20px;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .license-btn.primary {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            background: #1e293b;
             color: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .license-btn.primary:hover {
+        .activate-btn:hover {
+            background: #334155;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
 
-        .license-btn:disabled {
-            opacity: 0.6;
+        .activate-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
 
         .license-message {
-            min-height: 24px;
-            font-size: 13px;
-            margin-bottom: 16px;
+            min-height: 18px;
+            font-size: 11px;
+            text-align: center;
+            margin-top: 8px;
         }
 
         .license-message.error {
@@ -325,25 +599,65 @@
             color: #10b981;
         }
 
-        .license-info {
-            padding-top: 24px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 13px;
+        .activate-footer {
+            text-align: center;
+            font-size: 11px;
             color: #64748b;
+            line-height: 1.4;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 8px;
         }
 
-        .license-info p {
-            margin: 4px 0;
+        .activate-footer p {
+            margin: 0;
         }
 
-        .license-contact {
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            color: #6366f1;
-            font-weight: 500;
+        /* 强制覆盖 - 减少上下左右留白 */
+        div.license-right {
+            padding: 12px !important;
+        }
+
+        div.license-dialog {
+            max-height: calc(100vh - 60px) !important;
+            height: calc(100vh - 60px) !important;
+            max-width: calc(100vw - 40px) !important;
+        }
+
+        /* 强制设置列宽 */
+        .license-left {
+            flex: 0 0 280px !important;
+        }
+
+        .license-center {
+            flex: 0 0 320px !important;
+            align-items: center !important;
+        }
+
+        .license-right {
+            flex: 0 0 400px !important;
+        }
+
+        .license-right * {
+            line-height: 1 !important;
+        }
+
+        /* 强制设置激活卡片padding - 使用更高优先级选择器 */
+        div.license-right .activate-card {
+            padding: 14px 24px !important;
+        }
+
+        .qrcode-title {
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+
+        .qrcode-box {
+            margin-top: 2px !important;
+            margin-bottom: 0 !important;
         }
     </style>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
     <!-- D3.js for visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -379,41 +693,104 @@
         </div>
 
         <!-- 激活界面 -->
-        <div class="license-screen" id="licenseScreen" style="display: none;">
+        <div class="license-screen" id="licenseScreen" style="display: none !important;">
             <div class="license-bg-pattern"></div>
-            <div class="license-content">
-                <div class="license-logo-wrapper">
-                    <img src="assets/LensAnalysis-horizontal.png" alt="析镜 LensAnalysis" class="license-logo-img">
-                </div>
-                <h2 class="license-title">激活析镜</h2>
-                <p class="license-subtitle">请输入您的激活码以继续使用</p>
 
-                <div class="license-form">
-                    <div class="license-input-group">
-                        <input
-                            type="text"
-                            id="licenseKeyInput"
-                            class="license-input"
-                            placeholder="输入激活码 (格式: LENS-xxx-xxx-xxx)"
-                            autocomplete="off"
-                        >
+            <!-- 竖排装饰文字 - 左侧 -->
+            <div class="vertical-text-decoration-left">风起于青萍之末</div>
+
+            <!-- 竖排装饰文字 - 右侧 -->
+            <div class="vertical-text-decoration-right">浪成于微澜之间</div>
+
+            <div class="license-dialog">
+                <!-- 左侧：品牌信息 + 机器码 -->
+                <div class="license-left">
+                    <img src="assets/LensAnalysis-icon.png" alt="LensAnalysis" class="license-brand-logo">
+                    <h1 class="license-brand-title">析镜</h1>
+                    <p class="license-brand-desc">LensAnalysis</p>
+
+                    <!-- 机器码 -->
+                    <div class="machine-card">
+                        <div class="machine-card-title">您的机器码</div>
+                        <div class="machine-code-box">
+                            <span class="machine-code-value" id="machineCodeValue">获取中...</span>
+                            <button class="copy-btn" id="copyMachineCodeBtn">复制</button>
+                        </div>
                     </div>
-                    <button class="license-btn primary" id="activateBtn">
-                        <span id="activateBtnText">激活</span>
-                    </button>
                 </div>
 
-                <div class="license-message" id="licenseMessage"></div>
+                <!-- 中间：激活流程 -->
+                <div class="license-center">
+                    <div class="license-info-title">激活流程</div>
+                    <div class="license-info-list">
+                        <div class="license-info-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            <span>复制左侧机器码</span>
+                        </div>
+                        <div class="license-info-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM17 17l3 3M20 17l-3 3"/>
+                            </svg>
+                            <span>扫码关注公众号</span>
+                        </div>
+                        <div class="license-info-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            <span>发送"激活码"获取</span>
+                        </div>
+                        <div class="license-info-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22,4 12,14.01 9,11.01"/>
+                            </svg>
+                            <span>输入激活码完成激活</span>
+                        </div>
+                    </div>
+                </div>
 
-                <div class="license-info">
-                    <p>如需获取激活码，请联系：</p>
-                    <p class="license-contact">support@example.com</p>
+                <!-- 右侧：二维码 + 激活输入 -->
+                <div class="license-right">
+                    <div class="qrcode-box">
+                        <img src="assets/gzh.png" alt="公众号二维码" class="qrcode-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                        <div class="qrcode-placeholder" style="display: none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M8 8h8M8 12h8M8 16h4"/>
+                            </svg>
+                            <p>公众号二维码</p>
+                        </div>
+                    </div>
+
+                    <!-- 激活输入 -->
+                    <div class="activate-card">
+                        <div class="activate-title">输入激活码</div>
+                        <div class="activate-input-group">
+                            <input
+                                type="text"
+                                id="licenseKeyInput"
+                                class="activate-input"
+                                placeholder="LENS-xxx-xxx-xxx"
+                                autocomplete="off"
+                            >
+                            <button class="activate-btn" id="activateBtn">激活</button>
+                        </div>
+                        <div class="license-message" id="licenseMessage"></div>
+                        <div class="activate-footer">
+                            <p>QQ群: 1038310324</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 顶部导航栏 -->
-        <header class="header">
+        <header class="header" style="display: none !important;">
             <div class="header-left">
                 <div class="logo">
                     <img class="logo-icon" src="assets/LensAnalysis-icon.svg" alt="析镜" width="28" height="28">
@@ -460,7 +837,7 @@
         </header>
 
         <!-- 主内容区域 -->
-        <div class="main-container">
+        <div class="main-container" style="display: none !important;">
             <!-- 左侧边栏 -->
             <aside class="sidebar">
                 <div class="sidebar-section">
@@ -1690,21 +2067,6 @@
                         <span>自定义Flag</span>
                     </button>
                 </div>
-
-                <!-- 系统信息 -->
-                <div class="sidebar-section system-info-section">
-                    <div class="system-info-item" id="vol3Status">
-                        <div class="system-info-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                            </svg>
-                        </div>
-                        <div class="system-info-content">
-                            <div class="system-info-label">Volatility 3</div>
-                            <div class="system-info-value" id="vol3Version">检测中...</div>
-                        </div>
-                    </div>
-                </div>
             </aside>
 
             <!-- 主内容区 -->
@@ -2209,6 +2571,9 @@
                     <div class="about-creator">
                         created by <a href="https://github.com/hilyary/LensAnalysis" target="_blank" style="color: var(--accent);">hilyary</a>
                     </div>
+                    <div id="aboutLicenseInfo" class="about-license-info">
+                        <span class="license-info-loading">加载中...</span>
+                    </div>
                 </div>
 
                 <!-- 中间：功能列表 -->
@@ -2707,52 +3072,48 @@
                         }
                     }, 2500);
 
-                    // 调试面板（可选）
-                    const debugInfo = document.getElementById('debugInfo');
-
-                    const updateDebug = (msg) => {
-                        if (debugInfo) debugInfo.innerHTML += msg + '<br>';
-                    };
-
-                    updateDebug('=== 析镜 LensAnalysis 初始化 ===');
-                    updateDebug('1. window.pywebview: ' + !!window.pywebview);
-                    updateDebug('2. window.pywebview.api: ' + !!(window.pywebview && window.pywebview.api));
-
                     this.bindEvents();
 
                     // 等待 pywebview ready 事件
                     document.addEventListener('pywebviewready', async () => {
-                        updateDebug('✅ pywebviewready 事件触发!');
                         this.isWebView = true;
                         this.api = window.pywebview.api;
-                        updateDebug('模式: 完整模式');
-                        updateDebug('API: ' + (this.api ? '可用' : '不可用'));
 
                         // 检测 Volatility 3 是否已安装（会自动设置状态）
                         await this.checkVolatility3();
+
+                        // 检查许可证状态
+                        await this.checkLicenseStatus();
                     });
 
                     // 备用检测
                     setTimeout(async () => {
                         if (!this.isWebView && window.pywebview && window.pywebview.api) {
-                            updateDebug('✅ 直接检测到 pywebview.api');
                             this.isWebView = true;
                             this.api = window.pywebview.api;
 
                             // 检测 Volatility 3（会自动设置状态）
                             await this.checkVolatility3();
-                            updateDebug('模式: 完整模式');
+
+                            // 检查许可证状态
+                            await this.checkLicenseStatus();
                         } else if (!this.isWebView) {
-                            updateDebug('⚠️ 使用演示模式');
-                            updateDebug('未检测到 pywebview API');
                             this.setSystemStatus('演示模式', 'warning');
                         }
                     }, 1000);
-
-                    updateDebug('初始化完成，等待 API...');
                 }
 
                 bindEvents() {
+                    // 激活相关按钮
+                    const activateBtn = document.getElementById('activateBtn');
+                    const copyMachineCodeBtn = document.getElementById('copyMachineCodeBtn');
+                    if (activateBtn) {
+                        activateBtn.addEventListener('click', () => this.activateLicense());
+                    }
+                    if (copyMachineCodeBtn) {
+                        copyMachineCodeBtn.addEventListener('click', () => this.copyMachineCode());
+                    }
+
                     // 加载镜像按钮
                     const loadImageBtn = document.getElementById('loadImageBtn');
                     const welcomeLoadBtn = document.getElementById('welcomeLoadBtn');
@@ -3331,6 +3692,174 @@
                     const extractEventlogBtn = document.getElementById('extractEventlogBtn');
                     if (extractEventlogBtn) extractEventlogBtn.addEventListener('click', () => this.extractEventlogs());
                 }
+
+                // ===== 许可证相关方法 =====
+                async checkLicenseStatus() {
+                    console.log('[checkLicenseStatus] 开始检查许可证状态');
+                    if (!this.api) {
+                        console.log('[checkLicenseStatus] API不可用');
+                        return;
+                    }
+                    try {
+                        const result = await this.api.get_license_status();
+                        console.log('[checkLicenseStatus] 返回:', result);
+
+                        if (result && result.status === 'success' && result.data && result.data.valid) {
+                            console.log('[checkLicenseStatus] 许可证有效，调用 hideLicenseScreen');
+                            setTimeout(() => this.hideLicenseScreen(), 100);
+                        } else {
+                            console.log('[checkLicenseStatus] 许可证无效，显示激活界面');
+                            this.showLicenseScreen();
+                        }
+                    } catch (error) {
+                        console.error('[checkLicenseStatus] 错误:', error);
+                        this.showLicenseScreen();
+                    }
+                }
+
+                showLicenseScreen() {
+                    console.log('[showLicenseScreen] 显示激活界面');
+                    const licenseScreen = document.getElementById('licenseScreen');
+                    const splashScreen = document.getElementById('splashScreen');
+                    const mainContent = document.querySelector('.main-container');
+                    const header = document.querySelector('.header');
+
+                    if (splashScreen) splashScreen.style.setProperty('display', 'none', 'important');
+                    if (mainContent) mainContent.style.setProperty('display', 'none', 'important');
+                    if (header) header.style.setProperty('display', 'none', 'important');
+                    if (licenseScreen) licenseScreen.style.setProperty('display', 'flex', 'important');
+
+                    // 延迟加载机器码，确保DOM完全渲染
+                    setTimeout(() => this.loadMachineCode(), 100);
+                }
+
+                hideLicenseScreen() {
+                    const licenseScreen = document.getElementById('licenseScreen');
+                    const mainContent = document.querySelector('.main-container');
+                    const header = document.querySelector('.header');
+                    const app = document.getElementById('app');
+
+                    // 确保 #app 使用 flex 布局
+                    if (app) {
+                        app.style.setProperty('display', 'flex', 'important');
+                        app.style.setProperty('flex-direction', 'column', 'important');
+                    }
+
+                    // 使用 !important 强制隐藏，覆盖CSS中的 !important 规则
+                    if (licenseScreen) {
+                        licenseScreen.style.setProperty('display', 'none', 'important');
+                    }
+                    if (mainContent) {
+                        mainContent.style.setProperty('display', 'flex', 'important');
+                    }
+                    if (header) {
+                        header.style.setProperty('display', 'flex', 'important');
+                    }
+
+                    // 调整窗口为主界面尺寸
+                    if (window.pywebview) {
+                        window.pywebview.api.resize_window(1400, 850);
+                    }
+                }
+
+                async loadMachineCode() {
+                    console.log('[loadMachineCode] 开始加载机器码');
+                    const machineCodeValue = document.getElementById('machineCodeValue');
+                    if (!machineCodeValue) {
+                        console.error('[loadMachineCode] 找不到元素');
+                        return;
+                    }
+
+                    if (!this.api) {
+                        console.log('[loadMachineCode] API不可用');
+                        return;
+                    }
+
+                    try {
+                        machineCodeValue.textContent = '正在获取...';
+                        const result = await this.api.get_license_status();
+                        console.log('[loadMachineCode] 返回:', result);
+
+                        if (result && result.status === 'success' && result.data && result.data.machine_code) {
+                            machineCodeValue.textContent = result.data.machine_code;
+                            console.log('[loadMachineCode] 机器码设置成功:', result.data.machine_code);
+                        } else {
+                            console.error('[loadMachineCode] 返回格式错误:', result);
+                            machineCodeValue.textContent = '获取失败';
+                        }
+                    } catch (error) {
+                        console.error('[loadMachineCode] 异常:', error);
+                        machineCodeValue.textContent = '获取失败';
+                    }
+                }
+
+                async activateLicense() {
+                    const input = document.getElementById('licenseKeyInput');
+                    const messageDiv = document.getElementById('licenseMessage');
+                    const btn = document.getElementById('activateBtn');
+
+                    const licenseKey = input ? input.value.trim() : '';
+                    if (!licenseKey) {
+                        this.showLicenseMessage('请输入激活码', 'error');
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.textContent = '激活中...';
+
+                    try {
+                        const result = await this.api.activate_license(licenseKey);
+                        if (result.status === 'success') {
+                            this.showLicenseMessage(result.message || '激活成功', 'success');
+                            // 激活成功后，延迟一下然后重新检查许可证状态，自动进入主界面
+                            setTimeout(async () => {
+                                await this.checkLicenseStatus();
+                            }, 1500);
+                        } else {
+                            this.showLicenseMessage(result.message || '激活失败', 'error');
+                        }
+                    } catch (error) {
+                        this.showLicenseMessage('激活失败: ' + error.message, 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = '激活';
+                    }
+                }
+
+                showLicenseMessage(message, type = 'info') {
+                    const messageDiv = document.getElementById('licenseMessage');
+                    if (messageDiv) {
+                        messageDiv.textContent = message;
+                        messageDiv.className = 'license-message ' + type;
+                    }
+                }
+
+                async copyMachineCode() {
+                    const machineCodeValue = document.getElementById('machineCodeValue');
+                    if (!machineCodeValue) return;
+
+                    const machineCode = machineCodeValue.textContent;
+                    try {
+                        await navigator.clipboard.writeText(machineCode);
+                        this.toast('success', '复制成功', '机器码已复制');
+                    } catch (error) {
+                        // 降级方案
+                        const textArea = document.createElement('textarea');
+                        textArea.value = machineCode;
+                        textArea.style.position = 'fixed';
+                        textArea.style.opacity = '0';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            this.toast('success', '复制成功', '机器码已复制');
+                        } catch (err) {
+                            this.toast('error', '复制失败', '无法复制到剪贴板');
+                        }
+                        document.body.removeChild(textArea);
+                    }
+                }
+                // ===== 许可证方法结束 =====
 
                 updatePluginVisibility(osType) {
                     /** 根据操作系统类型显示/隐藏插件
@@ -4648,6 +5177,68 @@
                     if (overlay) {
                         overlay.classList.remove('hidden');
                     }
+                    this.loadAboutLicenseInfo();
+                }
+
+                async loadAboutLicenseInfo() {
+                    const container = document.getElementById('aboutLicenseInfo');
+                    if (!container) return;
+
+                    if (!this.api) {
+                        container.innerHTML = '';
+                        return;
+                    }
+
+                    try {
+                        const result = await this.api.get_license_status();
+                        if (result && result.status === 'success' && result.data && result.data.valid) {
+                            const data = result.data;
+                            const expiry = data.expiry;
+                            let expiryText = '';
+                            if (expiry === 0) {
+                                expiryText = '永久许可';
+                            } else {
+                                const expiryDate = new Date(expiry * 1000);
+                                const now = new Date();
+                                const diffMs = expiryDate - now;
+
+                                if (diffMs <= 0) {
+                                    expiryText = '已过期';
+                                } else {
+                                    // 计算剩余时间
+                                    const minutesLeft = Math.floor(diffMs / (1000 * 60));
+                                    const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+                                    const daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                                    // 智能显示格式
+                                    if (minutesLeft < 60) {
+                                        expiryText = `${minutesLeft}分钟后过期`;
+                                    } else if (hoursLeft < 24) {
+                                        expiryText = `${hoursLeft}小时后过期`;
+                                    } else if (daysLeft <= 7) {
+                                        expiryText = `${daysLeft}天后过期`;
+                                    } else {
+                                        expiryText = `有效期至 ${expiryDate.toLocaleDateString('zh-CN')}`;
+                                    }
+                                }
+                            }
+
+                            container.innerHTML = `
+                                <div class="license-line">${expiryText}</div>
+                                <div class="license-line license-machine-code">${this.escapeHtml(data.machine_code || '未知')}</div>
+                            `;
+                        } else {
+                            container.innerHTML = '<div class="license-line">未激活</div>';
+                        }
+                    } catch (error) {
+                        container.innerHTML = '';
+                    }
+                }
+
+                escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
                 }
 
                 closeAboutDialog() {

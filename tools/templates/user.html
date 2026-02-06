@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>析镜 - 激活码生成</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            max-width: 480px;
+            width: 100%;
+            padding: 48px 40px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 16px auto 24px;
+        }
+
+        .info-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: #f8fafc;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input.error {
+            border-color: #ef4444;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 28px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            display: none;
+            border: 1.5px solid #bae6fd;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-label {
+            color: #0369a1;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .license-key {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            word-break: break-all;
+            text-align: center;
+            font-size: 14px;
+            color: #0369a1;
+            border: 2px dashed #7dd3fc;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .license-key:hover {
+            border-color: #0ea5e9;
+            background: #f0f9ff;
+        }
+
+        .copy-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 12px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1.5px solid #bbf7d0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">析</div>
+            <h1>析镜 LensAnalysis</h1>
+            <p>激活码生成</p>
+        </div>
+
+        <div style="text-align: center;">
+            <div class="info-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12,6 12,12 16,14"/>
+                </svg>
+                有效期：<strong>365天</strong>
+            </div>
+        </div>
+
+        <div class="alert alert-error" id="errorAlert"></div>
+        <div class="alert alert-success" id="successAlert"></div>
+
+        <form id="licenseForm">
+            <div class="form-group">
+                <label for="machineCode">机器码</label>
+                <input
+                    type="text"
+                    id="machineCode"
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                    maxlength="19"
+                    autocomplete="off"
+                >
+                <div class="error-msg" id="machineCodeError"></div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                生成激活码
+            </button>
+        </form>
+
+        <div class="result" id="result">
+            <div class="result-label">您的激活码</div>
+            <div class="license-key" id="licenseKey" title="点击复制">
+                <!-- 激活码将显示在这里 -->
+            </div>
+            <div class="copy-hint">点击激活码即可复制</div>
+        </div>
+
+        <div class="footer">
+            析镜 LensAnalysis · 内存取证分析平台
+        </div>
+    </div>
+
+    <script>
+        const machineCodeInput = document.getElementById('machineCode');
+        const submitBtn = document.getElementById('submitBtn');
+        const licenseForm = document.getElementById('licenseForm');
+        const resultDiv = document.getElementById('result');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        const licenseKeyDiv = document.getElementById('licenseKey');
+
+        // 自动格式化机器码输入
+        machineCodeInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            let formatted = '';
+            for (let i = 0; i < value.length && i < 16; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formatted += '-';
+                }
+                formatted += value[i];
+            }
+            e.target.value = formatted;
+        });
+
+        // 隐藏错误提示
+        machineCodeInput.addEventListener('input', function() {
+            hideError('machineCode');
+        });
+
+        function hideError(field) {
+            const errorDiv = document.getElementById(field + 'Error');
+            const input = document.getElementById(field);
+            errorDiv.style.display = 'none';
+            input.classList.remove('error');
+        }
+
+        function showError(field, message) {
+            const errorDiv = document.getElementById(field + 'Error');
+            const input = document.getElementById(field);
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            input.classList.add('error');
+        }
+
+        function showAlert(message, type = 'error') {
+            if (type === 'error') {
+                errorAlert.textContent = message;
+                errorAlert.classList.add('show');
+                setTimeout(() => errorAlert.classList.remove('show'), 5000);
+            } else {
+                successAlert.textContent = message;
+                successAlert.classList.add('show');
+                setTimeout(() => successAlert.classList.remove('show'), 5000);
+            }
+        }
+
+        licenseForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const machineCode = machineCodeInput.value.trim();
+
+            if (!machineCode) {
+                showError('machineCode', '请输入机器码');
+                return;
+            }
+
+            if (machineCode.length !== 19) {
+                showError('machineCode', '机器码格式不正确，应为16位字符');
+                return;
+            }
+
+            // 从机器码生成用户ID（使用前8位）
+            const userId = 'user_' + machineCode.replace(/-/g, '').substring(0, 8);
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>生成中...';
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        machine_code: machineCode,
+                        user_id: userId,
+                        days: 365
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    licenseKeyDiv.textContent = result.data.license_key;
+                    resultDiv.classList.add('show');
+
+                    showAlert('激活码生成成功！有效期365天', 'success');
+                } else {
+                    showAlert(result.error || '生成失败，请重试');
+                }
+            } catch (error) {
+                showAlert('网络错误，请稍后重试');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '生成激活码';
+            }
+        });
+
+        // 复制激活码
+        licenseKeyDiv.addEventListener('click', function() {
+            const text = this.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = this.textContent;
+                this.textContent = '✓ 已复制到剪贴板';
+                this.style.background = '#f0fdf4';
+                this.style.color = '#16a34a';
+                this.style.borderColor = '#86efac';
+
+                setTimeout(() => {
+                    this.textContent = original;
+                    this.style.background = 'white';
+                    this.style.color = '#0369a1';
+                    this.style.borderColor = '#7dd3fc';
+                }, 2000);
+            }).catch(() => {
+                showAlert('复制失败，请手动复制');
+            });
+        });
+    </script>
+</body>
+</html>
