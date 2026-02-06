@@ -81,23 +81,17 @@ jobs:
 
       - name: Fix Info.plist for proper GUI app
         run: |
-          python3 << 'EOF'
+          python3 -c "
 import plistlib
-
 plist_path = 'dist/LensAnalysis.app/Contents/Info.plist'
-
 with open(plist_path, 'rb') as f:
     plist = plistlib.load(f)
-
-# 添加必要的键
 plist['NSPrincipalClass'] = 'NSApplication'
 plist['LSBackgroundOnly'] = False
-
 with open(plist_path, 'wb') as f:
     plistlib.dump(plist, f)
-
-print("Info.plist 已修复")
-EOF
+print('Info.plist fixed')
+"
 
       - name: Re-sign after Info.plist modification
         run: |
