@@ -50,7 +50,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install Nuitka
-        run: pip install "nuitka==2.5.5"
+        run: pip install "nuitka==1.9.7"
 
       - name: Install dependencies
         run: |
