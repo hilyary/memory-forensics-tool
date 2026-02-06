@@ -174,19 +174,6 @@ def main():
     import os
     import traceback
 
-    # 调试用：显示对话框确认应用启动
-    if platform.system() == 'Darwin':
-        try:
-            import tkinter
-            root = tkinter.Tk()
-            root.withdraw()
-            result = tkinter.messagebox.askyesno("LensAnalysis", "应用正在启动...\n\n请点击「是」继续")
-            root.destroy()
-            if not result:
-                sys.exit(0)
-        except Exception as e:
-            pass  # 如果 tkinter 不可用，继续执行
-
     try:
         # 检查是否有 GUI 会话（macOS 双击启动时需要）
         if platform.system() == 'Darwin':
@@ -207,6 +194,17 @@ def main():
         logger.info(f"Command line args: {sys.argv}")
         logger.info(f"Working directory: {os.getcwd()}")
         logger.info("=" * 60)
+
+        # 记录所有环境变量到文件，帮助调试
+        try:
+            import tempfile
+            env_file = Path(tempfile.gettempdir()) / 'lensanalysis_env.txt'
+            with open(env_file, 'w') as f:
+                for key, value in sorted(os.environ.items()):
+                    f.write(f"{key}={value}\n")
+            logger.info(f"环境变量已记录到: {env_file}")
+        except Exception as e:
+            logger.warning(f"无法记录环境变量: {e}")
 
         # 创建一个标记文件，表示应用已启动
         try:
