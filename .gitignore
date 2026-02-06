@@ -65,3 +65,9 @@ secrets/
 SERVER_DEPLOY.md
 .env.server
 deploy_*.sh
+
+# 部署相关
+build.sh
+QUICK_START.md
+DEPLOYMENT.md
+tools/
