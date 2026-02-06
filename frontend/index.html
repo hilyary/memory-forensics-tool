@@ -8343,6 +8343,22 @@
                     }, 3000);
                 }
 
+                // 兼容不同调用格式的 showToast 函数
+                showToast(...args) {
+                    // 支持两种格式:
+                    // 1. showToast(message, type) - 如 showToast('代理设置功能仅在桌面应用中可用', 'warning')
+                    // 2. showToast(type, title, message) - 如 showToast('success', '安装成功', message)
+                    if (args.length === 2) {
+                        // 格式1: message, type
+                        const [message, type] = args;
+                        this.toast(type, '提示', message);
+                    } else if (args.length === 3) {
+                        // 格式2: type, title, message
+                        const [type, title, message] = args;
+                        this.toast(type, title, message);
+                    }
+                }
+
                 escapeHtml(text) {
                     const div = document.createElement('div');
                     div.textContent = text;
