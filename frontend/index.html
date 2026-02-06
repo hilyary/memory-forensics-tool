@@ -110,6 +110,15 @@
             border-radius: 8px;
             margin: 16px 0;
         }
+        .vol3-install-tip {
+            font-size: 13px;
+            color: #0ea5e9;
+            padding: 8px 12px;
+            background: #e0f2fe;
+            border-radius: 6px;
+            margin: 8px 0;
+            display: inline-block;
+        }
         .vol3-install-actions {
             display: flex;
             gap: 12px;
@@ -8100,11 +8109,11 @@
                     // 根据平台获取安装说明
                     let platformNote = '';
                     if (platform === 'Windows') {
-                        platformNote = 'Windows 系统将使用 pip 安装 Volatility 3。';
+                        platformNote = 'Windows 系统将使用 pip 安装 Volatility 3（使用清华镜像加速）。';
                     } else if (platform === 'Darwin') {
-                        platformNote = 'macOS 系统将使用 pip3 安装 Volatility 3。';
+                        platformNote = 'macOS 系统将使用 pip3 安装 Volatility 3（使用清华镜像加速）。';
                     } else if (platform === 'Linux') {
-                        platformNote = 'Linux 系统将使用 pip3 --user 安装 Volatility 3。';
+                        platformNote = 'Linux 系统将使用 pip3 --user 安装 Volatility 3（使用清华镜像加速）。';
                     }
 
                     const overlay = document.createElement('div');
@@ -8119,6 +8128,7 @@
                             <h2>需要安装 Volatility 3</h2>
                             <p>析镜需要 Volatility 3 框架来进行内存分析。</p>
                             <p class="vol3-install-note">${platformNote}</p>
+                            <p class="vol3-install-tip">💡 使用清华 PyPI 镜像加速下载</p>
                             <div class="vol3-install-actions">
                                 <button class="vol3-install-btn" id="installVol3Btn">
                                     <span>一键安装</span>

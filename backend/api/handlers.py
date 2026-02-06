@@ -5212,12 +5212,15 @@ if __name__ == '__main__':
 
     def _get_install_command(self, platform: str) -> str:
         """获取平台特定的安装命令"""
+        # 使用清华镜像加速（国内用户）
+        mirror = ' -i https://pypi.tuna.tsinghua.edu.cn/simple'
+
         if platform == 'Windows':
-            return 'pip install volatility3'
+            return f'pip install{mirror} volatility3'
         elif platform == 'Darwin':
-            return 'pip3 install volatility3'
+            return f'pip3 install{mirror} volatility3'
         else:  # Linux
-            return 'pip3 install volatility3 --user'
+            return f'pip3 install{mirror} volatility3 --user'
 
     def install_volatility3(self) -> Dict[str, Any]:
         """安装 Volatility 3（使用 pip，跨平台）"""
@@ -5251,12 +5254,12 @@ if __name__ == '__main__':
             self._show_loading('正在安装 Volatility 3，请稍候...')
 
             try:
-                # 构建安装命令
+                # 构建安装命令（使用清华镜像加速）
                 if system == 'Windows':
-                    cmd = [sys.executable, '-m', 'pip', 'install', 'volatility3']
+                    cmd = [sys.executable, '-m', 'pip', 'install', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple', 'volatility3']
                 else:
                     # macOS/Linux 使用 pip3
-                    cmd = [sys.executable, '-m', 'pip', 'install', 'volatility3']
+                    cmd = [sys.executable, '-m', 'pip', 'install', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple', 'volatility3']
                     if system == 'Linux':
                         cmd.append('--user')  # Linux 默认用户级安装
 
@@ -5275,9 +5278,9 @@ if __name__ == '__main__':
 
                     # 检查是否需要更新 PATH
                     if system in ['Darwin', 'Linux']:
-                        message = 'Volatility 3 安装成功！\n\n如果 vol 命令不可用，请将以下路径添加到 PATH:\n~/Library/Python/3.9/bin (macOS)\n~/.local/bin (Linux)'
+                        message = 'Volatility 3 安装成功！\n\n使用清华镜像加速下载。\n\n如果 vol 命令不可用，请将以下路径添加到 PATH:\n~/Library/Python/3.9/bin (macOS)\n~/.local/bin (Linux)'
                     else:
-                        message = 'Volatility 3 安装成功！\n\n现在可以使用内存分析功能了。'
+                        message = 'Volatility 3 安装成功！\n\n使用清华镜像加速下载。\n\n现在可以使用内存分析功能了。'
 
                     return {
                         'status': 'success',
@@ -5327,7 +5330,10 @@ if __name__ == '__main__':
             return """手动安装步骤：
 
 1. 打开命令提示符（CMD）或 PowerShell
-2. 运行命令：pip install volatility3
+2. 运行命令（使用清华镜像加速）：
+   pip install -i https://pypi.tuna.tsinghua.edu.cn/simple volatility3
+   或使用官方源：
+   pip install volatility3
 3. 如果提示 pip 不存在，请先安装 Python：
    https://www.python.org/downloads/
 4. 安装时勾选 "Add Python to PATH" """
@@ -5335,7 +5341,10 @@ if __name__ == '__main__':
             return """手动安装步骤：
 
 1. 打开终端（Terminal）
-2. 运行命令：pip3 install volatility3
+2. 运行命令（使用清华镜像加速）：
+   pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple volatility3
+   或使用官方源：
+   pip3 install volatility3
 3. 如果提示 pip3 不存在，请先安装 Python：
    brew install python3
    或访问 https://www.python.org/downloads/
@@ -5345,7 +5354,10 @@ if __name__ == '__main__':
             return """手动安装步骤：
 
 1. 打开终端
-2. 运行命令：pip3 install volatility3 --user
+2. 运行命令（使用清华镜像加速）：
+   pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple volatility3 --user
+   或使用官方源：
+   pip3 install volatility3 --user
 3. 如果提示 pip3 不存在，请先安装：
    Ubuntu/Debian: sudo apt install python3-pip
    CentOS/RHEL: sudo yum install python3-pip
