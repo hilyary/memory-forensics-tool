@@ -2566,8 +2566,15 @@ class VolatilityWrapper:
                     )
                     result = subprocess.run(**subprocess_kwargs)
 
+                    logger.info(f"strings 命令返回码: {result.returncode}")
+                    if result.stderr:
+                        logger.warning(f"strings stderr: {result.stderr[:500]}")
+                    if result.stdout:
+                        logger.info(f"strings stdout 长度: {len(result.stdout)} 字符")
+
                     if result.returncode == 0:
                         lines = result.stdout.split('\n')
+                        logger.info(f"strings 输出 {len(lines)} 行")
                         for i, line in enumerate(lines):
                             line = line.strip()
                             if not line:
@@ -2585,8 +2592,10 @@ class VolatilityWrapper:
                                 except re.error:
                                     logger.warning(f"无效的正则表达式: {pattern}")
                         logger.info(f"搜索完成: 检查了 {len(lines)} 行，找到 {len(results)} 个匹配")
+                    else:
+                        logger.error(f"strings 命令执行失败，返回码: {result.returncode}, 错误: {result.stderr}")
                 except Exception as e:
-                    logger.error(f"strings 命令执行失败: {str(e)}")
+                    logger.error(f"strings 命令执行异常: {str(e)}")
             else:
                 # Windows 上没有 strings 命令，使用 Python 直接读取
                 logger.info("使用 Python 读取内存文件（Windows，无 strings 命令）")
