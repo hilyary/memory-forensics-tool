@@ -4904,20 +4904,20 @@ try:
     import json
     import uuid
 except ImportError as e:
-    print(f"错误: 缺少依赖 {e}")
-    print("请安装: pip install volatility3")
+    print(f"Error: Missing dependency {e}")
+    print("Please install: pip install volatility3")
     sys.exit(1)
 
 def download_symbols(image_path, symbols_dir):
     """下载 Windows 符号表"""
     if not os.path.exists(image_path):
-        print(f"错误: 镜像文件不存在: {image_path}")
+        print(f"Error: Image file not found: {image_path}")
         return False
 
     symbols_dir = Path(symbols_dir)
     symbols_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"正在扫描镜像: {image_path}")
+    print(f"Scanning image: {image_path}")
 
     try:
         # 构建context并加载镜像
@@ -4935,7 +4935,7 @@ def download_symbols(image_path, symbols_dir):
         # 扫描常见的Windows内核PDB名称
         pdb_names = [b'ntkrnlmp.pdb', b'ntoskrnl.pdb', b'krnl.pdb', b'ntkrpamp.pdb']
 
-        print("正在扫描 PDB 签名...")
+        print("Scanning PDB signatures...")
 
         # 使用pdbname_scan扫描PDB签名
         pdb_results = list(pdbutil.PDBUtility.pdbname_scan(
@@ -4943,7 +4943,7 @@ def download_symbols(image_path, symbols_dir):
         ))
 
         if not pdb_results:
-            print("错误: 未在内存镜像中找到 PDB 信息")
+            print("Error: PDB information not found in memory image")
             return False
 
         # 使用第一个找到的内核PDB
@@ -4952,14 +4952,15 @@ def download_symbols(image_path, symbols_dir):
         age = result.get('age', 0)
         pdb_name = result.get('pdb_name', 'ntkrnlmp.pdb')
 
-        print(f"找到 PDB 信息: {pdb_name}")
+        # 使用英文标记，方便正则匹配
+        print(f"PDB_INFO: {pdb_name}")
         print(f"  GUID: {guid}")
         print(f"  Age: {age}")
 
         # 检查符号表是否已存在
         symbol_path = symbols_dir / 'windows' / pdb_name / f"{guid}-{age}.json.xz"
         if symbol_path.exists():
-            print(f"符号表已存在: {symbol_path}")
+            print(f"Symbol file already exists: {symbol_path}")
             return True
 
         # 创建临时目录
@@ -4969,7 +4970,7 @@ def download_symbols(image_path, symbols_dir):
         try:
             # 下载 PDB 文件（支持代理和进度显示）
             pdb_url = f"https://msdl.microsoft.com/download/symbols/{pdb_name}/{guid}{age:01X}/{pdb_name}"
-            print(f"正在下载 PDB 文件...")
+            print(f"Downloading PDB file...")
             print(f"  URL: {pdb_url}")
 
             # 使用 urllib 下载（最快）
@@ -4988,7 +4989,7 @@ def download_symbols(image_path, symbols_dir):
                     })
                     opener = req2.build_opener(proxy_handler)
                     req2.install_opener(opener)
-                    print(f"检测到代理配置")
+                    print(f"Proxy detected")
             except:
                 pass
 
@@ -5002,7 +5003,7 @@ def download_symbols(image_path, symbols_dir):
                     if percent % 25 == 0 and percent > 0 and percent != last_shown[0]:
                         filled = percent // 5
                         bar = '=' * filled + ' ' * (20 - filled)
-                        print(f"  下载进度: [{bar}] {percent}%")
+                        print(f"  Download: [{bar}] {percent}%")
                         last_shown[0] = percent
 
             req2.urlretrieve(pdb_url, str(temp_pdb_path), reporthook=show_progress)
@@ -5025,7 +5026,7 @@ def download_symbols(image_path, symbols_dir):
 
             # 将字典转换为 JSON 字符串
             json_str = json.dumps(json_output, indent=2, sort_keys=True)
-            print(f"符号表转换成功，JSON 大小: {len(json_str)} bytes")
+            print(f"Symbol conversion successful, JSON size: {len(json_str)} bytes")
 
             # 确保目录存在
             os.makedirs(os.path.dirname(symbol_path), exist_ok=True)
@@ -5034,8 +5035,8 @@ def download_symbols(image_path, symbols_dir):
             with lzma.open(symbol_path, 'w') as f:
                 f.write(bytes(json_str, 'utf-8'))
 
-            print(f"符号表已保存: {symbol_path}")
-            print(f"符号表大小: {symbol_path.stat().st_size} bytes")
+            print(f"Symbol file saved: {symbol_path}")
+            print(f"Symbol file size: {symbol_path.stat().st_size} bytes")
             return True
 
         finally:
@@ -5047,14 +5048,14 @@ def download_symbols(image_path, symbols_dir):
                 pass
 
     except Exception as e:
-        print(f"错误: {type(e).__name__}: {e}")
+        print(f"Error: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print("用法: script.py <镜像文件> <符号表目录>")
+        print("Usage: script.py <image_file> <symbols_directory>")
         sys.exit(1)
 
     image_path = sys.argv[1]
@@ -5116,7 +5117,7 @@ if __name__ == '__main__':
                     pdb_info = None
                     try:
                         import re
-                        pdb_match = re.search(r'找到 PDB 信息:\s*(\S+)', output)
+                        pdb_match = re.search(r'PDB_INFO:\s*(\S+)', output)
                         guid_match = re.search(r'GUID:\s*([0-9A-Fa-f]+)', output)
                         age_match = re.search(r'Age:\s*(\d+)', output)
 
