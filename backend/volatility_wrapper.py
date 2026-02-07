@@ -2418,7 +2418,7 @@ class VolatilityWrapper:
             'linux_malware_check_syscall': 'linux.malware.check_syscall.Check_syscall',
             'linux_malware_hidden_modules': 'linux.malware.hidden_modules.Hidden_modules',
             'linux_malware_keyboard_notifiers': 'linux.malware.keyboard_notifiers.Keyboard_notifiers',
-            'linux_malware_netfilter': 'linux.malware.netfilter.Netfilter',
+            # 'linux_malware_netfilter': 'linux.malware.netfilter.Netfilter',  # 插件显示有问题，暂时删除
             'linux_malware_tty_check': 'linux.malware.tty_check.Tty_Check',
             'linux_malware_modxview': 'linux.malware.modxview.Modxview',
             # 内核信息
