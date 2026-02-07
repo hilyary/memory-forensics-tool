@@ -2363,10 +2363,10 @@ class VolatilityWrapper:
             'drivermodule': 'windows.malware.drivermodule.DriverModule',
             'driverirp': 'windows.driverirp.DriverIrp',
             # 系统深入分析
-            'shimcachemem': 'windows.shimcachemem.ShimcacheMem',  # 修正大小写
+            # 'shimcachemem': 'windows.shimcachemem.ShimcacheMem',  # 前端无菜单入口
             # 'mftscan': 'windows.mftscan.MftScan',  # 已废弃，在新版本中不存在
-            'mbrscan': 'windows.mbrscan.MbrScan',
-            'crashinfo': 'windows.crashinfo.Crashinfo',  # 修正大小写
+            # 'mbrscan': 'windows.mbrscan.MbrScan',  # 前端无菜单入口
+            # 'crashinfo': 'windows.crashinfo.Crashinfo',  # 前端无菜单入口
             'deskscan': 'windows.deskscan.DeskScan',
             'desktops': 'windows.desktops.Desktops',
             'devicetree': 'windows.devicetree.DeviceTree',
