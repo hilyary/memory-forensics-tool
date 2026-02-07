@@ -2561,19 +2561,26 @@ class VolatilityWrapper:
                     subprocess_kwargs = self._get_subprocess_kwargs(
                         cmd=[strings_exe, '-n', '4', self.image_path],
                         capture_output=True,
-                        text=True,
                         timeout=120
+                        # 不使用 text=True，手动处理编码以避免 Windows 编码问题
                     )
                     result = subprocess.run(**subprocess_kwargs)
 
                     logger.info(f"strings 命令返回码: {result.returncode}")
                     if result.stderr:
-                        logger.warning(f"strings stderr: {result.stderr[:500]}")
+                        stderr_str = result.stderr.decode('ascii', errors='ignore')[:500]
+                        logger.warning(f"strings stderr: {stderr_str}")
                     if result.stdout:
-                        logger.info(f"strings stdout 长度: {len(result.stdout)} 字符")
+                        logger.info(f"strings stdout 长度: {len(result.stdout)} 字节")
 
                     if result.returncode == 0:
-                        lines = result.stdout.split('\n')
+                        # 手动解码输出（ASCII with errors='ignore'）
+                        try:
+                            output = result.stdout.decode('ascii', errors='ignore')
+                        except:
+                            output = result.stdout.decode('latin-1', errors='ignore')
+
+                        lines = output.split('\n')
                         logger.info(f"strings 输出 {len(lines)} 行")
                         for i, line in enumerate(lines):
                             line = line.strip()
