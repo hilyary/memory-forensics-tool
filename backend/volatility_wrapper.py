@@ -239,14 +239,13 @@ class VolatilityWrapper:
 
             # 执行命令，使用自定义环境变量（Windows 上隐藏 CMD 窗口）
             subprocess_kwargs = self._get_subprocess_kwargs(
-                cmd=cmd,
                 env=env,
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5分钟超时
                 check=False
             )
-            result = subprocess.run(**subprocess_kwargs)
+            result = subprocess.run(cmd, **subprocess_kwargs)
 
             # 检查错误
             if result.returncode != 0:
@@ -298,14 +297,13 @@ class VolatilityWrapper:
 
                         logger.info(f"重试命令: {' '.join(cmd_with_symbols)}")
                         subprocess_kwargs = self._get_subprocess_kwargs(
-                            cmd=cmd_with_symbols,
                             env=env,
                             capture_output=True,
                             text=True,
                             timeout=300,
                             check=False
                         )
-                        result = subprocess.run(**subprocess_kwargs)
+                        result = subprocess.run(cmd_with_symbols, **subprocess_kwargs)
 
                         # 如果重试成功，解析输出
                         if result.returncode == 0:
@@ -2559,12 +2557,11 @@ class VolatilityWrapper:
                 try:
                     import subprocess
                     subprocess_kwargs = self._get_subprocess_kwargs(
-                        cmd=[strings_exe, '-n', '4', self.image_path],
                         capture_output=True,
                         timeout=120
                         # 不使用 text=True，手动处理编码以避免 Windows 编码问题
                     )
-                    result = subprocess.run(**subprocess_kwargs)
+                    result = subprocess.run([strings_exe, '-n', '4', self.image_path], **subprocess_kwargs)
 
                     logger.info(f"strings 命令返回码: {result.returncode}")
                     if result.stderr:
@@ -2647,12 +2644,11 @@ class VolatilityWrapper:
 
                 # 搜索至少4个字符的ASCII字符串
                 subprocess_kwargs = self._get_subprocess_kwargs(
-                    cmd=['strings', '-n', '4', self.image_path],
                     capture_output=True,
                     text=True,
                     timeout=120  # 2分钟超时
                 )
-                result = subprocess.run(**subprocess_kwargs)
+                result = subprocess.run(['strings', '-n', '4', self.image_path], **subprocess_kwargs)
 
                 if result.returncode == 0:
                     lines = result.stdout.split('\n')

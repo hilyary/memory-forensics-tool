@@ -5097,13 +5097,12 @@ if __name__ == '__main__':
 
                 # 执行下载脚本（Windows 上隐藏 CMD 窗口）
                 subprocess_kwargs = self._get_subprocess_kwargs(
-                    cmd=cmd,
                     env=env,
                     capture_output=True,
                     text=True,
                     timeout=300  # 5分钟超时
                 )
-                result = subprocess.run(**subprocess_kwargs)
+                result = subprocess.run(cmd, **subprocess_kwargs)
 
                 # 检查执行结果
                 if result.returncode == 0:
@@ -5380,11 +5379,10 @@ if __name__ == '__main__':
             try:
                 logger.info(f"检测 Python 可用性: {python_cmd} --version")
                 subprocess_kwargs = self._get_subprocess_kwargs(
-                    cmd=[python_cmd, '--version'],
                     capture_output=True,
                     timeout=10
                 )
-                result = subprocess.run(**subprocess_kwargs)
+                result = subprocess.run([python_cmd, '--version'], **subprocess_kwargs)
                 python_available = result.returncode == 0
                 logger.info(f"Python 可用性检测: {'成功' if python_available else '失败'}, stdout={result.stdout.decode('utf-8', errors='ignore').strip()}")
             except Exception as e:
@@ -5430,14 +5428,13 @@ if __name__ == '__main__':
                 cwd = str(Path.home())
 
                 subprocess_kwargs = self._get_subprocess_kwargs(
-                    cmd=cmd,
                     capture_output=True,
                     text=True,
                     timeout=300,  # 5 分钟超时
                     env=clean_env,
                     cwd=cwd
                 )
-                result = subprocess.run(**subprocess_kwargs)
+                result = subprocess.run(cmd, **subprocess_kwargs)
 
                 if result.returncode == 0:
                     self._hide_loading()
@@ -5448,14 +5445,13 @@ if __name__ == '__main__':
                     try:
                         # 尝试读取版本（使用安装时相同的 Python）
                         subprocess_kwargs2 = self._get_subprocess_kwargs(
-                            cmd=[python_cmd, '-c', 'import volatility3; print(volatility3.__version__)'],
                             capture_output=True,
                             text=True,
                             timeout=5,
                             env=clean_env,
                             cwd=cwd
                         )
-                        result2 = subprocess.run(**subprocess_kwargs2)
+                        result2 = subprocess.run([python_cmd, '-c', 'import volatility3; print(volatility3.__version__)'], **subprocess_kwargs2)
                         if result2.returncode == 0:
                             version = result2.stdout.strip()
                             logger.info(f"Volatility3 版本: {version}")
