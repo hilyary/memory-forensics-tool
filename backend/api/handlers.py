@@ -5344,19 +5344,39 @@ if __name__ == '__main__':
             system = platform.system()
             logger.info(f"安装 Volatility 3，平台: {system}")
 
+            # 先检测是否在打包环境中运行（必须在 Python 检测之前）
+            is_frozen = getattr(sys, 'frozen', False)
+            is_packaged = is_frozen or '.app' in sys.executable or '.exe' in sys.executable
+            logger.info(f"检测到打包环境: {is_packaged}, is_frozen={is_frozen}, executable={sys.executable}")
+
+            # 选择 Python：打包环境用系统 Python，否则用当前 Python
+            if is_packaged and system == 'Darwin':
+                python_cmd = 'python3'  # macOS 打包环境使用系统 python3
+            elif is_packaged and system == 'Windows':
+                python_cmd = 'python'  # Windows 打包环境使用系统 python
+            elif is_packaged and system == 'Linux':
+                python_cmd = 'python3'  # Linux 打包环境使用系统 python3
+            else:
+                python_cmd = sys.executable  # 开发环境使用当前 Python
+
+            logger.info(f"使用 Python 命令: {python_cmd}")
+
             # 检查 Python 是否可用
             python_available = False
             try:
+                logger.info(f"检测 Python 可用性: {python_cmd} --version")
                 result = subprocess.run(
-                    [sys.executable, '--version'],
+                    [python_cmd, '--version'],
                     capture_output=True,
-                    timeout=5
+                    timeout=10
                 )
                 python_available = result.returncode == 0
-            except Exception:
-                pass
+                logger.info(f"Python 可用性检测: {'成功' if python_available else '失败'}, stdout={result.stdout.decode('utf-8', errors='ignore').strip()}")
+            except Exception as e:
+                logger.error(f"Python 可用性检测异常: {e}")
 
             if not python_available:
+                logger.error(f"Python 不可用: {python_cmd}")
                 return {
                     'status': 'error',
                     'message': self._get_manual_install_message(system)
@@ -5366,20 +5386,7 @@ if __name__ == '__main__':
             self._show_loading('正在安装 Volatility 3，请稍候...')
 
             try:
-                # 检测是否在打包环境中运行
-                # 打包后的 sys.executable 通常在 .app 或 .exe 内部
-                is_frozen = getattr(sys, 'frozen', False)
-                is_packaged = is_frozen or '.app' in sys.executable or '.exe' in sys.executable
-
-                # 选择 Python：打包环境用系统 Python，否则用当前 Python
-                if is_packaged and system == 'Darwin':
-                    python_cmd = 'python3'  # macOS 打包环境使用系统 python3
-                elif is_packaged and system == 'Windows':
-                    python_cmd = 'python'  # Windows 打包环境使用系统 python
-                elif is_packaged and system == 'Linux':
-                    python_cmd = 'python3'  # Linux 打包环境使用系统 python3
-                else:
-                    python_cmd = sys.executable  # 开发环境使用当前 Python
+                # 继续使用之前选择的 python_cmd
 
                 # 构建安装命令（使用清华镜像加速）
                 if system == 'Windows':
