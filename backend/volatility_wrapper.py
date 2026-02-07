@@ -2328,9 +2328,9 @@ class VolatilityWrapper:
             'envars': 'windows.envars.Envars',
             'svcscan': 'windows.svcscan.SvcScan',
             'svcscan_reg': 'windows.registry.printkey.PrintKey',
-            'hashdump': 'windows.registry.hashdump.Hashdump',  # Windows 旧版本需要 registry 前缀
-            'lsadump': 'windows.registry.lsadump.Lsadump',  # Windows 旧版本需要 registry 前缀
-            'cachedump': 'windows.registry.cachedump.Cachedump',  # Windows 旧版本需要 registry 前缀
+            'hashdump': 'windows.registry.hashdump.Hashdump',
+            'lsadump': 'windows.registry.lsadump.Lsadump',
+            # 'cachedump': 'windows.registry.cachedump.Cachedump',  # Windows 2.27.0 不存在此插件
             # 命令历史
             'cmdscan': 'windows.cmdscan.CmdScan',
             'consoles': 'windows.consoles.Consoles',
