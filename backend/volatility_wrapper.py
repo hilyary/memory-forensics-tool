@@ -2330,7 +2330,7 @@ class VolatilityWrapper:
             'svcscan_reg': 'windows.registry.printkey.PrintKey',
             'hashdump': 'windows.registry.hashdump.Hashdump',
             'lsadump': 'windows.registry.lsadump.Lsadump',
-            # 'cachedump': 'windows.registry.cachedump.Cachedump',  # Windows 2.27.0 不存在此插件
+            'cachedump': 'windows.cachedump.Cachedump',  # macOS/Linux 版本存在，Windows 不存在
             # 命令历史
             'cmdscan': 'windows.cmdscan.CmdScan',
             'consoles': 'windows.consoles.Consoles',
