@@ -242,6 +242,8 @@ class VolatilityWrapper:
                 env=env,
                 capture_output=True,
                 text=True,
+                encoding='utf-8',  # 明确指定 UTF-8 编码
+                errors='replace',  # 遇到无法解码的字符时替换而不是报错
                 timeout=300,  # 5分钟超时
                 check=False
             )
@@ -300,6 +302,8 @@ class VolatilityWrapper:
                             env=env,
                             capture_output=True,
                             text=True,
+                            encoding='utf-8',  # 明确指定 UTF-8 编码
+                            errors='replace',  # 遇到无法解码的字符时替换而不是报错
                             timeout=300,
                             check=False
                         )
@@ -428,13 +432,14 @@ class VolatilityWrapper:
                 cmd.extend(extra_args)
 
             subprocess_kwargs = self._get_subprocess_kwargs(
-                cmd=cmd,
                 capture_output=True,
                 text=True,
+                encoding='utf-8',  # 明确指定 UTF-8 编码
+                errors='replace',  # 遇到无法解码的字符时替换而不是报错
                 timeout=300,
                 check=False
             )
-            result = subprocess.run(**subprocess_kwargs)
+            result = subprocess.run(cmd, **subprocess_kwargs)
 
             return result.stdout
 
@@ -2646,6 +2651,8 @@ class VolatilityWrapper:
                 subprocess_kwargs = self._get_subprocess_kwargs(
                     capture_output=True,
                     text=True,
+                    encoding='utf-8',  # 明确指定 UTF-8 编码
+                    errors='replace',  # 遇到无法解码的字符时替换而不是报错
                     timeout=120  # 2分钟超时
                 )
                 result = subprocess.run(['strings', '-n', '4', self.image_path], **subprocess_kwargs)
