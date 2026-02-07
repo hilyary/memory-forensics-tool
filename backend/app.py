@@ -13,6 +13,10 @@ import platform
 from datetime import datetime
 from typing import Dict, Tuple
 
+# 设置统一的许可证密钥（与服务器保持一致）
+if not os.environ.get('LENS_SECRET_KEY'):
+    os.environ['LENS_SECRET_KEY'] = '7664625674306d9713b51cdec1e8d9891967e8f7c4e06be01fe95ccfb297b107'
+
 # 导入 webview（不在导入前设置后端，避免 Nuitka 冲突）
 import webview
 
@@ -110,18 +114,29 @@ class LensAnalysisApp:
         # 如果未激活，不需要注入机器码（前端会通过API获取）
         # 前端会在页面加载时调用 api.get_license_status() 获取机器码
 
+        # 检测是否 Windows 系统
+        system = platform.system()
+        is_windows = system == 'Windows'
+
         # 构建窗口参数
         window_args = {
             'title': '析镜 LensAnalysis - 内存取证分析工具',
             'url': frontend_path,
             'js_api': self.api_handler,
-            'width': 1400,
-            'height': 850,
-            'min_size': (1200, 700),
             'resizable': True,
             'frameless': False,
             'background_color': '#ffffff'
         }
+
+        # 根据平台设置不同的窗口参数
+        if is_windows:
+            # Windows 主界面全屏
+            window_args['fullscreen'] = True
+        else:
+            # macOS/Linux 使用固定大小
+            window_args['width'] = 1400
+            window_args['height'] = 850
+            window_args['min_size'] = (1200, 700)
 
         # PyWebView 的 icon 参数支持情况:
         # - macOS Cocoa: 不支持
@@ -131,7 +146,6 @@ class LensAnalysisApp:
         #
         # 注意: 打包后的应用图标由打包工具配置 (PyInstaller/Nuitka)
         # 开发模式下，只有 Linux GTK 可以设置窗口图标
-        system = platform.system()
         if system != 'Darwin' and system != 'Windows':
             # 只有非 macOS/Windows 平台才尝试设置图标
             icon_path = self._get_app_icon()
@@ -141,10 +155,13 @@ class LensAnalysisApp:
         # 如果未激活，修改标题和大小显示激活界面
         if not self.license_valid:
             window_args['title'] = '析镜 - 激活'
+            # 激活界面使用固定大小（所有平台一致）
             window_args['width'] = 1220
             window_args['height'] = 700
+            window_args['fullscreen'] = False  # 激活界面不全屏
             window_args['resizable'] = False
-            window_args['min_size'] = (1220, 700)
+            if not is_windows:
+                window_args['min_size'] = (1220, 700)
 
         self.window = webview.create_window(**window_args)
 
