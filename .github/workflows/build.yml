@@ -156,7 +156,7 @@ jobs:
 
       - name: Create DMG
         run: |
-          echo "=== Creating Beautiful DMG ==="
+          echo "=== Creating DMG ==="
           # 创建临时目录用于 DMG
           mkdir -p dmg_contents
 
@@ -166,57 +166,18 @@ jobs:
           # 创建 Applications 文件夹的符号链接（方便拖拽安装）
           ln -s /Applications dmg_contents/Applications
 
-          # 创建一个临时的 DMG
+          # 创建 DMG（使用 UDZO 格式，兼容性更好）
           hdiutil create -volname "LensAnalysis" \
                          -srcfolder dmg_contents \
-                         -ov -format UDRW \
-                         -size 200m \
-                         "dist/temp.dmg"
-
-          # 挂载临时 DMG
-          MOUNT_POINT=$(hdiutil attach -readwrite -noverify -noautoopen "dist/temp.dmg" | grep -E '^/dev/' | sed 1q | awk '{print $3}')
-          echo "Mounted at: $MOUNT_POINT"
-
-          # 使用 AppleScript 设置 DMG 外观
-          echo '
-          tell application "Finder"
-            tell disk "LensAnalysis"
-              open
-              set current view of container window to icon view
-              set toolbar visible of container window to false
-              set statusbar visible of container window to false
-              set the bounds of container window to {400, 100, 920, 440}
-              set viewOptions to the icon view options of container window
-              set arrangement of viewOptions to not arranged
-              set icon size of viewOptions to 128
-              set position of item "LensAnalysis.app" of container window to {150, 175}
-              set position of item "Applications" of container window to {550, 175}
-              close
-              open
-              update without registering applications
-              delay 2
-              close
-            end tell
-          end tell
-          ' | osascript
-
-          # 同步并卸载
-          sync
-          hdiutil detach "$MOUNT_POINT" -quiet
-
-          # 压缩为最终的 DMG
-          hdiutil convert "dist/temp.dmg" \
-                         -format UDZO \
+                         -ov -format UDZO \
                          -imagekey zlib-level=9 \
-                         -o "dist/LensAnalysis-1.0.11-macOS.dmg"
-
-          # 删除临时 DMG
-          rm -f "dist/temp.dmg"
+                         -fs HFS+ \
+                         "dist/LensAnalysis-1.0.11-macOS.dmg"
 
           # 清理
           rm -rf dmg_contents
 
-          echo "Beautiful DMG created:"
+          echo "DMG created:"
           ls -la dist/*.dmg
 
       - name: Upload macOS app and DMG
