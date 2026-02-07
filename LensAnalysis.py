@@ -17,21 +17,10 @@ sys.path.insert(0, project_root)
 from backend.app import main
 
 if __name__ == '__main__':
-    print("""
-╔════════════════════════════════════════════════════════════╗
-║                                                            ║
-║   析镜 LensAnalysis                                       ║
-║   基于 Volatility 3 的图形化内存取证工具                   ║
-║   Email: hil_yary@163.com                                 ║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
-""")
-
+    # GUI 应用不使用 print，避免弹出控制台窗口
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n程序已退出")
         sys.exit(0)
-    except Exception as e:
-        print(f"\n错误: {e}")
+    except Exception:
         sys.exit(1)
