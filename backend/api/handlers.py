@@ -5057,8 +5057,8 @@ if __name__ == '__main__':
             script_path = scripts_dir / 'download_symbols.py'
 
             try:
-                # 写入脚本内容
-                script_path.write_text(script_content)
+                # 写入脚本内容（明确使用 UTF-8 编码）
+                script_path.write_text(script_content, encoding='utf-8')
 
                 # 构建命令
                 if platform.system() == 'Windows':
@@ -5121,7 +5121,7 @@ if __name__ == '__main__':
                                 'age': age,
                                 'image_path': self.current_image['path']
                             }
-                            pdb_info_path.write_text(json.dumps(pdb_info, indent=2))
+                            pdb_info_path.write_text(json.dumps(pdb_info, indent=2), encoding='utf-8')
                             logger.info(f"已保存 PDB 信息到: {pdb_info_path}")
                     except Exception as e:
                         logger.warning(f"解析或保存 PDB 信息失败: {e}")
