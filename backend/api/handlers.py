@@ -5100,6 +5100,8 @@ if __name__ == '__main__':
                     env=env,
                     capture_output=True,
                     text=True,
+                    encoding='utf-8',  # 明确指定 UTF-8 编码
+                    errors='replace',  # 遇到无法解码的字符时替换而不是报错
                     timeout=300  # 5分钟超时
                 )
                 result = subprocess.run(cmd, **subprocess_kwargs)
