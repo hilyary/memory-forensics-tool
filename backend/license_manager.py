@@ -35,12 +35,12 @@ class OfflineLicenseManager:
         self.license_dir = self._get_user_data_dir()
         self.license_file = self.license_dir / "license.json"
 
-        # 密钥：使用环境变量或默认值（后期可以改为从配置文件读取）
+        # 密钥：使用环境变量或默认值
         # 生产环境建议设置环境变量: LENS_SECRET_KEY
         self.secret_key = os.environ.get(
             'LENS_SECRET_KEY',
-            # 使用更复杂的默认密钥，包含多个混淆字符串
-            'LENS_2024_OFFLINE_KEY_' + hashlib.sha256(b'lensanalysis').hexdigest()[:16]
+            # 统一的服务器密钥（确保所有平台一致）
+            '7664625674306d9713b51cdec1e8d9891967e8f7c4e06be01fe95ccfb297b107'
         )
 
         # 确保目录存在
