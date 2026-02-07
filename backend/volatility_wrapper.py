@@ -36,6 +36,17 @@ class VolatilityWrapper:
 
         logger.info(f"项目根目录: {self._project_root}")
 
+    def _get_subprocess_kwargs(self, **kwargs) -> Dict[str, Any]:
+        """
+        获取 subprocess.run 的关键字参数
+        在 Windows 上添加 CREATE_NO_WINDOW 标志来隐藏 CMD 窗口
+        """
+        import platform
+        if platform.system() == 'Windows':
+            # Windows 上隐藏 CMD 窗口
+            kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+        return kwargs
+
     @staticmethod
     def _get_project_root() -> Path:
         """获取项目根目录（兼容 Nuitka/PyInstaller 打包）
@@ -226,15 +237,16 @@ class VolatilityWrapper:
 
             logger.info(f"执行命令: {' '.join(cmd)}")
 
-            # 执行命令，使用自定义环境变量
-            result = subprocess.run(
-                cmd,
+            # 执行命令，使用自定义环境变量（Windows 上隐藏 CMD 窗口）
+            subprocess_kwargs = self._get_subprocess_kwargs(
+                cmd=cmd,
                 env=env,
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5分钟超时
                 check=False
             )
+            result = subprocess.run(**subprocess_kwargs)
 
             # 检查错误
             if result.returncode != 0:
@@ -285,14 +297,15 @@ class VolatilityWrapper:
                             cmd_with_symbols.extend(extra_args)
 
                         logger.info(f"重试命令: {' '.join(cmd_with_symbols)}")
-                        result = subprocess.run(
-                            cmd_with_symbols,
+                        subprocess_kwargs = self._get_subprocess_kwargs(
+                            cmd=cmd_with_symbols,
                             env=env,
                             capture_output=True,
                             text=True,
                             timeout=300,
                             check=False
                         )
+                        result = subprocess.run(**subprocess_kwargs)
 
                         # 如果重试成功，解析输出
                         if result.returncode == 0:
@@ -416,13 +429,14 @@ class VolatilityWrapper:
             if extra_args:
                 cmd.extend(extra_args)
 
-            result = subprocess.run(
-                cmd,
+            subprocess_kwargs = self._get_subprocess_kwargs(
+                cmd=cmd,
                 capture_output=True,
                 text=True,
                 timeout=300,
                 check=False
             )
+            result = subprocess.run(**subprocess_kwargs)
 
             return result.stdout
 
@@ -2544,12 +2558,13 @@ class VolatilityWrapper:
                 logger.info(f"使用 strings 命令搜索内存（Windows + strings: {strings_exe}）")
                 try:
                     import subprocess
-                    result = subprocess.run(
-                        [strings_exe, '-n', '4', self.image_path],
+                    subprocess_kwargs = self._get_subprocess_kwargs(
+                        cmd=[strings_exe, '-n', '4', self.image_path],
                         capture_output=True,
                         text=True,
                         timeout=120
                     )
+                    result = subprocess.run(**subprocess_kwargs)
 
                     if result.returncode == 0:
                         lines = result.stdout.split('\n')
@@ -2615,12 +2630,13 @@ class VolatilityWrapper:
                 import subprocess
 
                 # 搜索至少4个字符的ASCII字符串
-                result = subprocess.run(
-                    ['strings', '-n', '4', self.image_path],
+                subprocess_kwargs = self._get_subprocess_kwargs(
+                    cmd=['strings', '-n', '4', self.image_path],
                     capture_output=True,
                     text=True,
                     timeout=120  # 2分钟超时
                 )
+                result = subprocess.run(**subprocess_kwargs)
 
                 if result.returncode == 0:
                     lines = result.stdout.split('\n')
