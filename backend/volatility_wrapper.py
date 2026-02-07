@@ -2357,16 +2357,16 @@ class VolatilityWrapper:
             'truecrypt': 'windows.truecrypt.Passphrase',
             # 系统扫描
             'modscan': 'windows.modscan.ModScan',
-            'ssdt': 'windows.ssdt.SSDT',
+            # 'ssdt': 'windows.ssdt.SSDT',  # 已废弃，在新版本中不存在
             # 驱动扫描
             'driverscan': 'windows.driverscan.DriverScan',
             'drivermodule': 'windows.malware.drivermodule.DriverModule',
             'driverirp': 'windows.driverirp.DriverIrp',
             # 系统深入分析
-            'shimcachemem': 'windows.shimcachemem.ShimCacheMem',
-            'mftscan': 'windows.mftscan.MftScan',
+            # 'shimcachemem': 'windows.shimcachemem.ShimCacheMem',  # 已废弃，在新版本中不存在
+            # 'mftscan': 'windows.mftscan.MftScan',  # 已废弃，在新版本中不存在
             'mbrscan': 'windows.mbrscan.MbrScan',
-            'crashinfo': 'windows.crashinfo.CrashInfo',
+            # 'crashinfo': 'windows.crashinfo.CrashInfo',  # 已废弃，在新版本中不存在
             'deskscan': 'windows.deskscan.DeskScan',
             'desktops': 'windows.desktops.Desktops',
             'devicetree': 'windows.devicetree.DeviceTree',
