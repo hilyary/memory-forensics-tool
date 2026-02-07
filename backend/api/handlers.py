@@ -5402,11 +5402,25 @@ if __name__ == '__main__':
                 logger.info(f"执行安装命令: {' '.join(cmd)}")
                 logger.info(f"打包环境: {is_packaged}, 使用 Python: {python_cmd}")
 
+                # 准备环境变量：清除可能干扰的 Python 环境变量
+                import os
+                clean_env = os.environ.copy()
+                # 移除可能导致路径问题的环境变量
+                clean_env.pop('PYTHONPATH', None)
+                clean_env.pop('PYTHONHOME', None)
+                # 移除 PYTHONIOENCODING 以避免编码问题
+                clean_env.pop('PYTHONIOENCODING', None)
+
+                # 设置工作目录为用户主目录（避免从 AppTranslocation 运行时的路径问题）
+                cwd = str(Path.home())
+
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=300  # 5 分钟超时
+                    timeout=300,  # 5 分钟超时
+                    env=clean_env,
+                    cwd=cwd
                 )
 
                 if result.returncode == 0:
@@ -5421,7 +5435,9 @@ if __name__ == '__main__':
                             [python_cmd, '-c', 'import volatility3; print(volatility3.__version__)'],
                             capture_output=True,
                             text=True,
-                            timeout=5
+                            timeout=5,
+                            env=clean_env,
+                            cwd=cwd
                         )
                         if result2.returncode == 0:
                             version = result2.stdout.strip()
