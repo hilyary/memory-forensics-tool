@@ -5195,6 +5195,10 @@ if __name__ == '__main__':
             for module in modules_to_remove:
                 del sys.modules[module]
 
+            # 检测是否在打包环境中运行
+            is_frozen = getattr(sys, 'frozen', False)
+            is_packaged = is_frozen or '.app' in sys.executable or '.exe' in sys.executable
+
             # 检查是否能导入 volatility3 模块
             can_import = False
             try:
@@ -5205,8 +5209,14 @@ if __name__ == '__main__':
                 logger.info(f"Volatility 3 模块不可导入: {e}")
 
             # 检查 vol 命令是否可用（根据平台）
-            vol_path = None
-            vol_works = False
+            # 打包环境下，系统的 vol 命令不可用，必须检查模块导入
+            if is_packaged:
+                logger.info(f"打包环境检测: can_import={can_import}")
+                vol_works = False
+                vol_path = None
+            else:
+                vol_path = None
+                vol_works = False
 
             if system == 'Windows':
                 # Windows: 检查 vol.exe
@@ -5356,16 +5366,34 @@ if __name__ == '__main__':
             self._show_loading('正在安装 Volatility 3，请稍候...')
 
             try:
+                # 检测是否在打包环境中运行
+                # 打包后的 sys.executable 通常在 .app 或 .exe 内部
+                is_frozen = getattr(sys, 'frozen', False)
+                is_packaged = is_frozen or '.app' in sys.executable or '.exe' in sys.executable
+
+                # 选择 Python：打包环境用系统 Python，否则用当前 Python
+                if is_packaged and system == 'Darwin':
+                    python_cmd = 'python3'  # macOS 打包环境使用系统 python3
+                elif is_packaged and system == 'Windows':
+                    python_cmd = 'python'  # Windows 打包环境使用系统 python
+                elif is_packaged and system == 'Linux':
+                    python_cmd = 'python3'  # Linux 打包环境使用系统 python3
+                else:
+                    python_cmd = sys.executable  # 开发环境使用当前 Python
+
                 # 构建安装命令（使用清华镜像加速）
                 if system == 'Windows':
-                    cmd = [sys.executable, '-m', 'pip', 'install', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple', 'volatility3']
+                    cmd = [python_cmd, '-m', 'pip', 'install', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple', 'volatility3']
                 else:
                     # macOS/Linux 使用 pip3
-                    cmd = [sys.executable, '-m', 'pip', 'install', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple', 'volatility3']
+                    cmd = [python_cmd, '-m', 'pip', 'install', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple', 'volatility3']
                     if system == 'Linux':
                         cmd.append('--user')  # Linux 默认用户级安装
+                    elif is_packaged and system == 'Darwin':
+                        cmd.append('--user')  # macOS 打包环境也使用 --user
 
                 logger.info(f"执行安装命令: {' '.join(cmd)}")
+                logger.info(f"打包环境: {is_packaged}, 使用 Python: {python_cmd}")
 
                 result = subprocess.run(
                     cmd,
@@ -5378,21 +5406,19 @@ if __name__ == '__main__':
                     self._hide_loading()
                     logger.info("Volatility 3 安装成功")
 
-                    # 获取安装的版本号
+                    # 获取安装的版本号（使用相同的 Python 命令）
                     version = None
                     try:
-                        import importlib
-                        volatility3_spec = importlib.util.find_spec('volatility3')
-                        if volatility3_spec and volatility3_spec.origin:
-                            # 尝试读取版本
-                            result2 = subprocess.run(
-                                [sys.executable, '-c', 'import volatility3; print(volatility3.__version__)'],
-                                capture_output=True,
-                                text=True,
-                                timeout=5
-                            )
-                            if result2.returncode == 0:
-                                version = result2.stdout.strip()
+                        # 尝试读取版本（使用安装时相同的 Python）
+                        result2 = subprocess.run(
+                            [python_cmd, '-c', 'import volatility3; print(volatility3.__version__)'],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+                        if result2.returncode == 0:
+                            version = result2.stdout.strip()
+                            logger.info(f"Volatility3 版本: {version}")
                     except Exception as e:
                         logger.warning(f"无法获取 volatility3 版本: {e}")
 
