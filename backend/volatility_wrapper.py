@@ -2328,9 +2328,10 @@ class VolatilityWrapper:
             'envars': 'windows.envars.Envars',
             'svcscan': 'windows.svcscan.SvcScan',
             'svcscan_reg': 'windows.registry.printkey.PrintKey',
-            'hashdump': 'windows.registry.hashdump.Hashdump',  # 新版本带 registry 前缀
-            'lsadump': 'windows.registry.lsadump.Lsadump',  # 新版本带 registry 前缀
-            'cachedump': 'windows.registry.cachedump.Cachedump',  # 新版本带 registry 前缀
+            # hashdump/lsadump/cachedump 需要 pycryptodome 依赖
+            'hashdump': 'windows.hashdump.Hashdump',
+            'lsadump': 'windows.lsadump.Lsadump',
+            'cachedump': 'windows.cachedump.Cachedump',
             # 命令历史
             'cmdscan': 'windows.cmdscan.CmdScan',
             'consoles': 'windows.consoles.Consoles',
