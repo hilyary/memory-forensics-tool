@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=webview.platforms.edgechromium --include-module=socks --include-package=Cryptodome --include-package=Cryptodome.Cipher --windows-icon-from-ico=frontend/assets/LensAnalysis-icon.ico --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=webview.platforms.edgechromium --include-module=socks --include-package=Crypto --include-package=Crypto.Cipher --windows-icon-from-ico=frontend/assets/LensAnalysis-icon.ico --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-console-mode=disable LensAnalysis.py
 
       - name: List build output
         run: |
