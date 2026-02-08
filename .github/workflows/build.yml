@@ -203,7 +203,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgirepository1.0-dev gir1.2-gtk-3.0 libcairo2 libwebkit2gtk-4.0-dev
+          sudo apt-get install -y libgirepository1.0-dev gir1.2-gtk-3.0 libcairo2
 
       - name: Install Nuitka
         run: pip install "nuitka==2.8.10"
