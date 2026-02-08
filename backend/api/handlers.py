@@ -2120,6 +2120,11 @@ class APIHandler:
             user_specified_os: 用户指定的操作系统类型 ('Windows', 'Linux', 'macOS')，如果为None则自动检测
         """
         try:
+            # 只在切换镜像时清空 banner 缓存（相同镜像保留缓存）
+            if self.current_image and self.current_image.get('path') != file_path:
+                logger.info(f"切换镜像，清空 banner 缓存")
+                self._cached_banner = None
+
             if not os.path.exists(file_path):
                 return {
                     'status': 'error',
