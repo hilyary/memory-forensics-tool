@@ -67,8 +67,8 @@ jobs:
             --include-module=socks \
             --include-package=objc \
             --include-module=PyObjCTools \
-            --include-package=Cryptodome \
-            --include-package=Cryptodome.Cipher \
+            --include-package=Crypto \
+            --include-package=Crypto.Cipher \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
