@@ -129,14 +129,10 @@ class LensAnalysisApp:
         }
 
         # 根据平台设置不同的窗口参数
-        if is_windows:
-            # Windows 主界面全屏
-            window_args['fullscreen'] = True
-        else:
-            # macOS/Linux 使用固定大小
-            window_args['width'] = 1400
-            window_args['height'] = 850
-            window_args['min_size'] = (1200, 700)
+        # 所有平台统一使用固定大小，确保有标题栏可以拖动和关闭
+        window_args['width'] = 1400
+        window_args['height'] = 850
+        window_args['min_size'] = (1200, 700)
 
         # PyWebView 的 icon 参数支持情况:
         # - macOS Cocoa: 不支持
@@ -158,10 +154,8 @@ class LensAnalysisApp:
             # 激活界面使用固定大小（所有平台一致）
             window_args['width'] = 1220
             window_args['height'] = 700
-            window_args['fullscreen'] = False  # 激活界面不全屏
+            window_args['min_size'] = (1220, 700)  # 确保固定大小
             window_args['resizable'] = False
-            if not is_windows:
-                window_args['min_size'] = (1220, 700)
 
         self.window = webview.create_window(**window_args)
 

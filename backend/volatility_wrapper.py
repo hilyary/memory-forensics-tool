@@ -2328,9 +2328,9 @@ class VolatilityWrapper:
             'envars': 'windows.envars.Envars',
             'svcscan': 'windows.svcscan.SvcScan',
             'svcscan_reg': 'windows.registry.printkey.PrintKey',
-            'hashdump': 'windows.hashdump.Hashdump',  # Windows/macOS 通用版本（不带 registry 前缀）
-            'lsadump': 'windows.lsadump.Lsadump',  # Windows/macOS 通用版本（不带 registry 前缀）
-            'cachedump': 'windows.cachedump.Cachedump',  # macOS/Linux 支持，Windows 可能不支持
+            'hashdump': 'windows.registry.hashdump.Hashdump',  # 新版本带 registry 前缀
+            'lsadump': 'windows.registry.lsadump.Lsadump',  # 新版本带 registry 前缀
+            'cachedump': 'windows.registry.cachedump.Cachedump',  # 新版本带 registry 前缀
             # 命令历史
             'cmdscan': 'windows.cmdscan.CmdScan',
             'consoles': 'windows.consoles.Consoles',
