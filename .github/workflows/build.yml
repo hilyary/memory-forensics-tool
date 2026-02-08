@@ -22,11 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich PySocks
+          pip install pywebview python-docx pefile pyyaml rich PySocks pycryptodome
 
       - name: Build with Nuitka
         run: |
-          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=webview.platforms.edgechromium --include-module=socks --windows-icon-from-ico=frontend/assets/LensAnalysis-icon.ico --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
+          python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist --output-filename=LensAnalysis.exe --jobs=4 --include-data-dir=frontend=frontend --include-package=webview.platforms.edgechromium --include-module=socks --include-package=Cryptodome --include-package=Cryptodome.Cipher --windows-icon-from-ico=frontend/assets/LensAnalysis-icon.ico --nofollow-import-to=volatility3 --nofollow-import-to=matplotlib --nofollow-import-to=numpy --nofollow-import-to=pandas --nofollow-import-to=scipy --nofollow-import-to=tkinter --windows-disable-console LensAnalysis.py
 
       - name: List build output
         run: |
@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks
+          pip install pywebview python-docx pefile pyyaml rich pyobjc-core pyobjc-framework-Cocoa PySocks pycryptodome
 
       - name: Build with Nuitka
         run: |
@@ -67,6 +67,8 @@ jobs:
             --include-module=socks \
             --include-package=objc \
             --include-module=PyObjCTools \
+            --include-package=Cryptodome \
+            --include-package=Cryptodome.Cipher \
             --nofollow-import-to=volatility3 \
             --nofollow-import-to=matplotlib \
             --nofollow-import-to=numpy \
